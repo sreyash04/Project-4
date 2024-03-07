@@ -7,9 +7,27 @@
 #include <vector>
 namespace StringUtils{
 
-std::string Slice(const std::string &str, ssize_t start, ssize_t end) noexcept{
-    return str.substr(start,str.length()-start);
+// std::string Slice(const std::string &str, ssize_t start, ssize_t end) noexcept{
+//     return str.substr(start,str.length()-start);
+// }
+
+// asked chat gpt to fix this s
+std::string Slice(const std::string &str, ssize_t start, ssize_t end) noexcept {
+    // Adjust negative indices
+    ssize_t strLen = static_cast<ssize_t>(str.length());
+    if (start < 0) start = strLen + start;
+    if (end <= 0) end = strLen + end;
+
+    // Ensure start and end are within bounds
+    start = std::max(start, static_cast<ssize_t>(0));
+    end = std::min(end, strLen);
+
+    if (start > end) return ""; // Return empty string if start is beyond end
+
+    ssize_t len = end - start;
+    return str.substr(start, len);
 }
+
 
 std::string Capitalize(const std::string &str) noexcept{
     auto Copy = str;
@@ -141,13 +159,52 @@ std::string Replace(const std::string &str, const std::string &old, const std::s
     return copy;
 }
 
-std::vector< std::string > Split(const std::string &str, const std::string &splt) noexcept{
+// std::vector< std::string > Split(const std::string &str, const std::string &splt) noexcept{
+//     std::vector<std::string> result;
+//     if (str.empty()) {
+//         return result; 
+//     }
+//     int start = 0;
+//     int end = 0;
+
+//     if (splt.empty()) { //edge case no split character given, split on whitespace
+//         while (start < str.size()) {
+//             while (start < str.size() && std::isspace(str[start])) {
+//                 ++start;
+//             }
+//             if (start >= str.size()){
+//                  break;
+//             }
+//             end = start;
+//             while (end < str.size() && !std::isspace(str[end])) {
+//                 ++end;
+//             }
+//             result.push_back(str.substr(start, end - start)); //code reference 7
+//             start = end;
+//         }
+//     } else {
+//         while (start < str.size()+1) { //+1 to account for split at end
+//             end = str.find(splt, start); // code reference 6
+
+//             if (end == std::string::npos) {
+//                 result.push_back(str.substr(start));
+//                 break;
+//             }
+//             result.push_back(str.substr(start, end - start));
+//             start = end + splt.size();
+//         }
+//     }
+//     return result;
+// }
+
+// asked chat gpt to fix split
+std::vector<std::string> Split(const std::string &str, const std::string &splt) noexcept{
     std::vector<std::string> result;
     if (str.empty()) {
         return result; 
     }
-    int start = 0;
-    int end = 0;
+    std::string::size_type start = 0;
+    std::string::size_type end = 0;
 
     if (splt.empty()) { //edge case no split character given, split on whitespace
         while (start < str.size()) {
@@ -161,12 +218,12 @@ std::vector< std::string > Split(const std::string &str, const std::string &splt
             while (end < str.size() && !std::isspace(str[end])) {
                 ++end;
             }
-            result.push_back(str.substr(start, end - start)); //code reference 7
+            result.push_back(str.substr(start, end - start));
             start = end;
         }
     } else {
-        while (start < str.size()+1) { //+1 to account for split at end
-            end = str.find(splt, start); // code reference 6
+        while (start < str.size() + 1) { //+1 to account for split at end
+            end = str.find(splt, start);
 
             if (end == std::string::npos) {
                 result.push_back(str.substr(start));
@@ -179,6 +236,7 @@ std::vector< std::string > Split(const std::string &str, const std::string &splt
     return result;
 }
 
+
 std::string Join(const std::string &str, const std::vector< std::string > &vect) noexcept{
     std::string result;
     for (size_t Index = 0; Index < vect.size(); ++Index) {
@@ -190,9 +248,21 @@ std::string Join(const std::string &str, const std::vector< std::string > &vect)
     return result;
 }
 
+// std::string ExpandTabs(const std::string &str, int tabsize) noexcept{
+//     std::string result = str;
+//     int pos = 0;
+//     while ((pos = result.find('\t', pos)) != std::string::npos) {
+//         int spaces = tabsize - (pos % tabsize);
+//         result.replace(pos, 1, std::string(spaces, ' '));
+//         pos += spaces;
+//     }
+//     return result;
+// }
+
+// asked chat gpt to fix expand tabs
 std::string ExpandTabs(const std::string &str, int tabsize) noexcept{
     std::string result = str;
-    int pos = 0;
+    std::string::size_type pos = 0;
     while ((pos = result.find('\t', pos)) != std::string::npos) {
         int spaces = tabsize - (pos % tabsize);
         result.replace(pos, 1, std::string(spaces, ' '));
@@ -200,6 +270,7 @@ std::string ExpandTabs(const std::string &str, int tabsize) noexcept{
     }
     return result;
 }
+
     
 int EditDistance(const std::string &left, const std::string &right, bool ignorecase) noexcept{
 if (left.empty()){

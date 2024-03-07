@@ -1,64 +1,67 @@
 #include <gtest/gtest.h>
-#include "XMLReader.h"
-#include "StringUtils.h"
-#include "StringDataSource.h"
-#include "DSVReader.h"
 #include "CSVBusSystem.h"
+#include "StringDataSource.h"
+#include "BusSystem.h"
 
-TEST(CSVBusSystem, SimpleTest){
-    auto InStreamStops = std::make_shared<CStringDataSource>("stop_id,node_id");
+TEST(CSVBusSystem, SimpleExampleTest){
+    auto InStreamStops = std::make_shared<CStringDataSource>("stop_id,node_id\n1,1001");
     auto InStreamRoutes = std::make_shared<CStringDataSource>("route,stop_id");
     auto CSVReaderStops = std::make_shared<CDSVReader>(InStreamStops,',');
     auto CSVReaderRoutes = std::make_shared<CDSVReader>(InStreamRoutes,',');
     CCSVBusSystem BusSystem(CSVReaderStops, CSVReaderRoutes);
-    EXPECT_EQ(BusSystem.StopCount(),0);
+
+    EXPECT_EQ(BusSystem.StopCount(),1);
     EXPECT_EQ(BusSystem.RouteCount(),0);
+    EXPECT_EQ(BusSystem.StopByIndex(0)->ID(),1);
 }
 
-TEST(CSVBusSystem, StopTest){
-    auto InStreamStops = std::make_shared<CStringDataSource>(   "stop_id,node_id\n"
-                                                                "1,101\n"
-                                                                "2,102");
-    auto InStreamRoutes = std::make_shared<CStringDataSource>("route,stop_id");
-    auto CSVReaderStops = std::make_shared<CDSVReader>(InStreamStops,',');
-    auto CSVReaderRoutes = std::make_shared<CDSVReader>(InStreamRoutes,',');
-    CCSVBusSystem BusSystem(CSVReaderStops, CSVReaderRoutes);
-    EXPECT_EQ(BusSystem.StopCount(),2);
-    EXPECT_EQ(BusSystem.RouteCount(),0);
-    auto Stop1Index = BusSystem.StopByIndex(0);
-    auto Stop1ID = BusSystem.StopByID(1);
-    EXPECT_EQ(Stop1Index,Stop1ID);
-    ASSERT_TRUE(bool(Stop1Index));
-    EXPECT_EQ(Stop1Index->ID(),1);
-    EXPECT_EQ(Stop1Index->NodeID(),101);
-    auto Stop2Index = BusSystem.StopByIndex(1);
-    auto Stop2ID = BusSystem.StopByID(2);
-    EXPECT_EQ(Stop2Index,Stop2ID);
-    ASSERT_TRUE(bool(Stop2Index));
-    EXPECT_EQ(Stop2Index->ID(),2);
-    EXPECT_EQ(Stop2Index->NodeID(),102);
+TEST(CSVBusSystem, BusSystemFuncsTest){
+    auto InStreamStops2 = std::make_shared<CStringDataSource>("stop_id,node_id\n1,39283\n2,29333\n3,939282\n4,43924\n5,99999\n6,291");
+    auto InStreamRoutes2 = std::make_shared<CStringDataSource>("route,stop_id\nA,39283\nA,29333\nA,939282\nB,43924\nB,99999\nB,291");
+    auto CSVReaderStops2 = std::make_shared<CDSVReader>(InStreamStops2,',');
+    auto CSVReaderRoutes2 = std::make_shared<CDSVReader>(InStreamRoutes2,',');
+    CCSVBusSystem BusSystem2(CSVReaderStops2, CSVReaderRoutes2);
+
+    //stop and route count
+    EXPECT_EQ(BusSystem2.StopCount(), 6);
+    EXPECT_EQ(BusSystem2.RouteCount(), 2);
+
+    //STOPBYINDEX
+    EXPECT_EQ(BusSystem2.StopByIndex(2)->ID(), 3);
+    EXPECT_EQ(BusSystem2.StopByIndex(99), nullptr);
+
+    //STOPBYID
+    EXPECT_EQ(BusSystem2.StopByID(1)->ID(), 1);
+    EXPECT_EQ(BusSystem2.StopByID(99), nullptr);
+
+    //ROUTEBYINDEX
+    EXPECT_EQ(BusSystem2.RouteByIndex(0)->Name(), "A");
+    EXPECT_EQ(BusSystem2.RouteByIndex(99), nullptr);
+
+    //ROUTEBYNAME
+    EXPECT_EQ(BusSystem2.RouteByName("B")->Name(), "B");
+    EXPECT_EQ(BusSystem2.RouteByName("D"), nullptr);
 }
 
-TEST(CSVBusSystem, RouteTest){
-    auto InStreamStops = std::make_shared<CStringDataSource>(   "stop_id,node_id\n"
-                                                                "1,101\n"
-                                                                "2,102");
-    auto InStreamRoutes = std::make_shared<CStringDataSource>(  "route,stop_id\n"
-                                                                "A,1\n"
-                                                                "A,2\n"
-                                                                "A,1");
-    auto CSVReaderStops = std::make_shared<CDSVReader>(InStreamStops,',');
-    auto CSVReaderRoutes = std::make_shared<CDSVReader>(InStreamRoutes,',');
-    CCSVBusSystem BusSystem(CSVReaderStops, CSVReaderRoutes);
-    EXPECT_EQ(BusSystem.StopCount(),2);
-    EXPECT_EQ(BusSystem.RouteCount(),1);
-    auto Route1Index = BusSystem.RouteByIndex(0);
-    auto Route1ID = BusSystem.RouteByName("A");
-    EXPECT_EQ(Route1Index,Route1ID);
-    ASSERT_TRUE(bool(Route1Index));
-    EXPECT_EQ(Route1Index->Name(),"A");
-    EXPECT_EQ(Route1Index->StopCount(),3);
-    EXPECT_EQ(Route1Index->GetStopID(0),1);
-    EXPECT_EQ(Route1Index->GetStopID(1),2);
-    EXPECT_EQ(Route1Index->GetStopID(2),1);
+TEST(CSVBusSystem, StopAndRouteFuncsTest){
+    auto InStreamStops3 = std::make_shared<CStringDataSource>("stop_id,node_id\n1,39283\n2,29333\n3,939282\n4,43924\n5,99999\n6,291");
+    auto InStreamRoutes3 = std::make_shared<CStringDataSource>("route,stop_id\nA,39283\nA,29333\nA,939282\nB,43924\nB,99999\nB,291");
+    auto CSVReaderStops3 = std::make_shared<CDSVReader>(InStreamStops3,',');
+    auto CSVReaderRoutes3 = std::make_shared<CDSVReader>(InStreamRoutes3,',');
+    CCSVBusSystem BusSystem3(CSVReaderStops3, CSVReaderRoutes3);
+
+    //ID
+    EXPECT_EQ(BusSystem3.StopByIndex(3)->ID(), 4);
+    //NODEID
+    EXPECT_EQ(BusSystem3.StopByIndex(2)->NodeID(), 939282);
+
+    //NAME
+    EXPECT_EQ(BusSystem3.RouteByIndex(1)->Name(), "B");
+    //STOPCOUNT
+    EXPECT_EQ(BusSystem3.RouteByIndex(1)->StopCount(), 3);
+    //GETSTOPID
+    EXPECT_EQ(BusSystem3.RouteByIndex(0)->GetStopID(2), 939282);
+    EXPECT_EQ(BusSystem3.RouteByIndex(0)->GetStopID(99), std::numeric_limits<uint64_t>::max());
+
+
 }
