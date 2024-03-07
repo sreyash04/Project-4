@@ -85,6 +85,11 @@ struct CDijkstraPathRouter::SImplementation
             //  if current id is equal to destination you have found the destination
             //  you can add an if and a break right here ~~~~ to outperform the profs code
 
+            // i am doing this
+            if(CurrentID == dest){
+                break;
+            }
+
             for (auto Edge : DVertices[CurrentID].Dedge)
             {
                 auto EdgeWeight = Edge.first;
@@ -168,5 +173,5 @@ bool CDijkstraPathRouter::Precompute(std::chrono::steady_clock::time_point deadl
 // with vertices. If no path exists NoPathExists is returned.
 double CDijkstraPathRouter::FindShortestPath(TVertexID src, TVertexID dest, std::vector<TVertexID> &path) noexcept
 {
-    //
+    return DImplementation->FindShortestPath(src, dest, path);
 }
