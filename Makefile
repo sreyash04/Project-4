@@ -10,53 +10,63 @@ TEST_SRC_DIR = ./testsrc
 CXXFLAGS = -std=c++17 -I$(INC_DIR) -Wall
 LDFLAGS = -lpthread -lgtest -lgtest_main -lexpat
 
-all: directories test_executables transplanner speedtest
+# Targets for building and running tests
+TESTS = teststrutils teststrdatasource teststrdatasink testdsv testxml testcsvbs testosm \
+        testfiledatass testkml testdpr testcsvbsi testtpcl testtp
 
-directories:
-	mkdir -p $(OBJ_DIR) $(BIN_DIR)
+# Final application targets
+APPS = transplanner speedtest
 
-# Object files rules
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+all: directories $(TESTS) $(APPS)
 
-$(OBJ_DIR)/%Test.o: $(TEST_SRC_DIR)/%Test.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+directories: 
+    @mkdir -p $(OBJ_DIR) $(BIN_DIR)
 
-# Test executables rules
-TEST_EXECUTABLES = teststrutils teststrdatasource teststrdatasink testdsv testxml testkml testcsvbs testosm testdpr testcsvbsi testtpcl testtp testfiledatass
-
-test_executables: $(TEST_EXECUTABLES)
-
-$(TEST_EXECUTABLES): test%: $(BIN_DIR)/test%
-	@echo Running $<
-	@$<
-
+# Test executables
 $(BIN_DIR)/test%: $(OBJ_DIR)/%Test.o $(OBJ_DIR)/%.o
-	$(CXX) $^ -o $@ $(LDFLAGS)
+    $(CXX) $^ -o $@ $(LDFLAGS)
+    ./$@
 
-# Special cases with multiple dependencies
-$(BIN_DIR)/testfiledatass: $(OBJ_DIR)/FileDataSourceTest.o $(OBJ_DIR)/FileDataSource.o $(OBJ_DIR)/FileDataSink.o $(OBJ_DIR)/FileDataFactory.o $(OBJ_DIR)/FileDataSSTest.o
-	$(CXX) $^ -o $@ $(LDFLAGS)
+# Specific rules for test executables that require linking multiple object files
+$(BIN_DIR)/testfiledatass: $(OBJ_DIR)/FileDataSource.o $(OBJ_DIR)/FileDataSink.o $(OBJ_DIR)/FileDataFactory.o $(OBJ_DIR)/FileDataSSTest.o
+    $(CXX) $^ -o $@ $(LDFLAGS)
+    ./$@
 
-$(BIN_DIR)/testtp: $(OBJ_DIR)/CSVOSMTransportationPlannerTest.o $(OBJ_DIR)/DijkstraTransportationPlanner.o # Add other dependencies as needed
-	$(CXX) $^ -o $@ $(LDFLAGS)
+$(BIN_DIR)/testkml: $(OBJ_DIR)/KMLWriter.o $(OBJ_DIR)/KMLTest.o
+    $(CXX) $^ -o $@ $(LDFLAGS)
+    ./$@
 
-# Final executables
-FINAL_EXECUTABLES = transplanner speedtest
+$(BIN_DIR)/testdpr: $(OBJ_DIR)/DijkstraPathRouter.o $(OBJ_DIR)/DijkstraPathRouterTest.o
+    $(CXX) $^ -o $@ $(LDFLAGS)
+    ./$@
 
-$(FINAL_EXECUTABLES): %: $(BIN_DIR)/%
-	@echo Building final executable $<
+$(BIN_DIR)/testcsvbsi: $(OBJ_DIR)/BusSystemIndexer.o $(OBJ_DIR)/CSVBusSystemIndexerTest.o
+    $(CXX) $^ -o $@ $(LDFLAGS)
+    ./$@
 
-$(BIN_DIR)/transplanner: # Add dependencies
-	# Build command here
+$(BIN_DIR)/testtpcl: $(OBJ_DIR)/TransportationPlannerCommandLine.o $(OBJ_DIR)/TPCommandLineTest.o
+    $(CXX) $^ -o $@ $(LDFLAGS)
+    ./$@
 
-$(BIN_DIR)/speedtest: # Add dependencies
-	# Build command here
+$(BIN_DIR)/testtp: $(OBJ_DIR)/CSVOSMTransportationPlannerTest.o $(OBJ_DIR)/DijkstraTransportationPlanner.o # Add other required object files here
+    $(CXX) $^ -o $@ $(LDFLAGS)
+    ./$@
 
-# Ensure tests are run before building final executables
-transplanner speedtest: test_executables
+# Compiling source files to object files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+    $(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/%.o: $(TEST_SRC_DIR)/%Test.cpp
+    $(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Application targets
+transplanner: # add object files required for transplanner
+    $(CXX) $(CXXFLAGS) $^ -o $(BIN_DIR)/$@ $(LDFLAGS)
+
+speedtest: # add object files required for speedtest
+    $(CXX) $(CXXFLAGS) $^ -o $(BIN_DIR)/$@ $(LDFLAGS)
 
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
+    rm -rf $(OBJ_DIR) $(BIN_DIR)
 
-.PHONY: all clean directories test_executables $(TEST_EXECUTABLES) $(FINAL_EXECUTABLES)
+.PHONY: all directories clean $(TESTS) $(APPS)
