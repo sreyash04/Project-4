@@ -1,10 +1,15 @@
 #include "DijkstraTransportationPlanner.h"
+#include "TransportationPlannerConfig.h"
+#include "TransportationPlanner.h"
 #include "DijkstraPathRouter.h"
+#include "GeographicUtils.h"
 #include <unordered_map>
 
 struct CDijkstraTransportationPlanner::SImplementation{
     std::shared_ptr< CStreetMap > DStreetMap;
     std::shared_ptr< CBusSystem > DBusSystem;
+    std::shared_ptr< SGeographicUtils > GeoUtils;
+    std::shared_ptr< STransportationPlannerConfig > Trans_plan;
     std::unordered_map< CStreetMap::TNodeID, CPathRouter::TVertexID > DNodeToVertexID;
     CDijkstraPathRouter DShortestPathRouter; // we want locals one for the shortest path pone for biking and one for walking plus bus
     CDijkstraPathRouter DFastestPathRouterBike;
@@ -31,9 +36,35 @@ struct CDijkstraTransportationPlanner::SImplementation{
             bool Bikeable = Way->GetAttribute("bicycle") != "no";
             bool Bidirectional = Way->GetAttribute("oneway") != "yes";
             auto PreviousNodeID = Way->GetNodeID(0);
-            for(size_t NodeIndex = 0; NodeIndex < Way->NodeCount();NodeIndex++){
+            for(size_t NodeIndex = 1; NodeIndex < Way->NodeCount();NodeIndex++){
                 // we will get the 
                 auto NextNodeID = Way->GetNodeID(NodeIndex);
+
+                auto PreviousNode = DStreetMap->NodeByID(PreviousNodeID);
+                auto NextNode = DStreetMap->NodeByID(NextNodeID);
+
+                auto PreviousNode_VertextID = DNodeToVertexID[PreviousNodeID];
+                auto NextNode_VertexID = DNodeToVertexID[NextNodeID];
+
+                auto PreviousNode_Loc = PreviousNode->Location();
+                auto NextNode_Loc = NextNode->Location();
+
+                auto H_Dist = GeoUtils->HaversineDistanceInMiles(PreviousNode_Loc, NextNode_Loc);
+
+                DShortestPathRouter.AddEdge(PreviousNode_VertextID, NextNode_VertexID, H_Dist);
+
+                auto biketime = H_Dist/(Trans_plan->BikeSpeed());
+                DFastestPathRouterBike.AddEdge(PreviousNode_VertextID, NextNode_VertexID, biketime);
+
+                auto walktime = H_Dist/(Trans_plan->WalkSpeed());
+
+                auto bustime = H_Dist/(Trans_plan->DefaultSpeedLimit()); // ***** how to get speed limit *****
+
+                auto total_bustime = bustime + Trans_plan->BusStopTime();
+
+                //what weight to put in for the edges in DFastestPathRouterBusWalk
+
+
                 // now we have the node ids and we can translate the node ids to vertex ids and then we can add an edge based on the weight
                 // to get the weight we have to get the location of the two nodes
                 // so if we have the location of the two nodes we can use Haversindistance formula 15:26
@@ -83,6 +114,34 @@ struct CDijkstraTransportationPlanner::SImplementation{
     }
 
     double FindFastest(TNodeID src, TNodeID dest, std::vector< TTripStep > &path){
+        std::vector< CPathRouter::TVertexID > ShortestPathBike;
+        std::vector< CPathRouter::TVertexID > ShortestPathBusWalk;
+
+        auto SourceVertexID = DNodeToVertexID[src];
+        auto DestinationVertexID = DNodeToVertexID[dest];
+
+        auto DistanceBike = DShortestPathRouter.FindShortestPath(SourceVertexID,DestinationVertexID,ShortestPathBike);
+        auto DistanceBusWalk = DShortestPathRouter.FindShortestPath(SourceVertexID,DestinationVertexID,ShortestPathBusWalk);
+
+        auto Distance = 0.0;
+
+        path.clear();
+
+        if(DistanceBike < DistanceBusWalk){
+            Distance = DistanceBike;
+            for(auto VertexID : ShortestPathBike){
+                auto x = std::any_cast< TNodeID >(DShortestPathRouter.GetVertexTag(VertexID));
+                TTripStep pair = {CTransportationPlanner::ETransportationMode::Bike, x};
+                path.push_back(pair);
+            }
+        }
+        else{
+            Distance = DistanceBusWalk;
+            // for bus/walk depending on which we take
+        }
+
+
+        return Distance;
         // have to do two searches search the bike path and search the walking plus bus and just take the faster of the two the lowest time of the two
     }
 

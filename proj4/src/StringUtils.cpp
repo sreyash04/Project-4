@@ -11,7 +11,7 @@ namespace StringUtils{
 //     return str.substr(start,str.length()-start);
 // }
 
-// asked chat gpt to fix this s
+// asked chat gpt to fix this 
 std::string Slice(const std::string &str, ssize_t start, ssize_t end) noexcept {
     // Adjust negative indices
     ssize_t strLen = static_cast<ssize_t>(str.length());
