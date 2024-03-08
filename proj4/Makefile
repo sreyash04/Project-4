@@ -7,6 +7,8 @@ OBJ_DIR = ./obj
 BIN_DIR = ./bin
 TEST_SRC_DIR = ./testsrc
 
+
+
 CXXFLAGS = -std=c++17 -I $(INC_DIR) -Wall
 LDFLAGS = -lpthread -lgtest -lgtest_main -lexpat
 
@@ -52,6 +54,7 @@ testtpcl: $(BIN_DIR)/testtpcl
 
 testtp: $(BIN_DIR)/testtp
 	$(BIN_DIR)/testtp
+
 
 # String Utils
 $(BIN_DIR)/teststrutils: $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringUtilsTest.o
@@ -154,6 +157,7 @@ $(OBJ_DIR)/FileDataSSTest.o: $(TEST_SRC_DIR)/FileDataSSTest.cpp $(INC_DIR)/FileD
 # testfiledatass executable
 $(BIN_DIR)/testfiledatass: $(OBJ_DIR)/FileDataSource.o $(OBJ_DIR)/FileDataSink.o $(OBJ_DIR)/FileDataFactory.o $(OBJ_DIR)/FileDataSSTest.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
+
 # KMLWriter
 $(OBJ_DIR)/KMLWriter.o: $(SRC_DIR)/KMLWriter.cpp $(INC_DIR)/KMLWriter.h
 	$(CXX) -o $@ -c $(CXXFLAGS) $(SRC_DIR)/KMLWriter.cpp
@@ -163,7 +167,7 @@ $(OBJ_DIR)/KMLTest.o: $(TEST_SRC_DIR)/KMLTest.cpp $(INC_DIR)/KMLWriter.h
 	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/KMLTest.cpp
 
 # testkml executable
-$(BIN_DIR)/testkml: $(OBJ_DIR)/KMLWriter.o $(OBJ_DIR)/KMLTest.o
+$(BIN_DIR)/testkml: $(OBJ_DIR)/KMLWriter.o $(OBJ_DIR)/KMLTest.o 
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 # DijkstraPathRouter
@@ -219,3 +223,5 @@ clean:
 
 directories:
 	mkdir -p $(OBJ_DIR) $(BIN_DIR)
+
+
