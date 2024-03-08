@@ -76,8 +76,7 @@ $(OBJ_DIR)/StringDataSource.o: $(SRC_DIR)/StringDataSource.cpp $(INC_DIR)/String
 $(OBJ_DIR)/StringDataSourceTest.o: $(TEST_SRC_DIR)/StringDataSourceTest.cpp $(INC_DIR)/StringDataSource.h
 	$(CXX) -o $@ -c $(TEST_SRC_DIR)/StringDataSourceTest.cpp $(CXXFLAGS)
 
-$(OBJ_DIR)/StringDataSource.o: $(SRC_DIR)/StringDataSource.cpp $(INC_DIR)/StringDataSource.h
-	$(CXX) -o $@ -c $(SRC_DIR)/StringDataSource.cpp $(CXXFLAGS)
+
 
 # StringDataSink
 $(BIN_DIR)/teststrdatasink: $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSinkTest.o
@@ -89,8 +88,6 @@ $(OBJ_DIR)/StringDataSink.o: $(SRC_DIR)/StringDataSink.cpp $(INC_DIR)/StringData
 $(OBJ_DIR)/StringDataSinkTest.o: $(TEST_SRC_DIR)/StringDataSinkTest.cpp $(INC_DIR)/StringDataSink.h
 	$(CXX) -o $@ -c $(TEST_SRC_DIR)/StringDataSinkTest.cpp $(CXXFLAGS)
 
-$(OBJ_DIR)/StringDataSink.o: $(SRC_DIR)/StringDataSink.cpp $(INC_DIR)/StringDataSink.h
-	$(CXX) -o $@ -c $(SRC_DIR)/StringDataSink.cpp $(CXXFLAGS)
 
 # DSV reader/writer
 $(BIN_DIR)/testdsv: $(OBJ_DIR)/DSVReader.o $(OBJ_DIR)/DSVWriter.o $(OBJ_DIR)/StringDataSource.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/DSVTest.o
@@ -159,7 +156,7 @@ $(BIN_DIR)/testfiledatass: $(OBJ_DIR)/FileDataSource.o $(OBJ_DIR)/FileDataSink.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 # KMLWriter
-$(OBJ_DIR)/KMLWriter.o: $(SRC_DIR)/KMLWriter.cpp $(INC_DIR)/KMLWriter.h
+$(OBJ_DIR)/KMLWriter.o: $(SRC_DIR)/KMLWriter.cpp $(INC_DIR)/KMLWriter.h $(OBJ_DIR)/XMLWriter.o
 	$(CXX) -o $@ -c $(CXXFLAGS) $(SRC_DIR)/KMLWriter.cpp
 
 # KMLTest
@@ -167,7 +164,7 @@ $(OBJ_DIR)/KMLTest.o: $(TEST_SRC_DIR)/KMLTest.cpp $(INC_DIR)/KMLWriter.h
 	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/KMLTest.cpp
 
 # testkml executable
-$(BIN_DIR)/testkml: $(OBJ_DIR)/KMLWriter.o $(OBJ_DIR)/KMLTest.o 
+$(BIN_DIR)/testkml: $(OBJ_DIR)/KMLWriter.o $(OBJ_DIR)/KMLTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 # DijkstraPathRouter
@@ -223,5 +220,3 @@ clean:
 
 directories:
 	mkdir -p $(OBJ_DIR) $(BIN_DIR)
-
-
