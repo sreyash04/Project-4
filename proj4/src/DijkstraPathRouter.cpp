@@ -141,7 +141,7 @@ CDijkstraPathRouter::~CDijkstraPathRouter()
 }
 
 // Returns the number of vertices in the path router
-std::size_t CDijkstraPathRouter::VertexCount() const
+std::size_t CDijkstraPathRouter::VertexCount() const noexcept
 {
     return DImplementation->VertexCount();
 }
