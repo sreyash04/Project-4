@@ -5,7 +5,9 @@
 #include "GeographicUtils.h"
 #include "BusSystemIndexer.cpp"
 #include <unordered_map>
-#include <algorithm> // For std::sort
+#include <algorithm>
+#include <iostream>
+#include <cmath>  // For std::sort
 
 struct CDijkstraTransportationPlanner::SImplementation{
     std::shared_ptr< CStreetMap > DStreetMap;
@@ -202,8 +204,35 @@ struct CDijkstraTransportationPlanner::SImplementation{
     }
 
     bool GetPathDescription(const std::vector< TTripStep >&path, std::vector < std::string > &desc) const{
+        TTripStep start = path[0];
+        TNodeID start_nodeID = start.second;
+        auto start_node = DStreetMap->NodeByID(start_nodeID);
+        auto start_node_loc = start_node->Location();
+        double start_lat = start_node_loc.first;
+        double start_lon = start_node_loc.second;
+        std::string start_lat_str = convertDMS(start_lat, 'L');
+        std::string start_lon_str = convertDMS(start_lon, 'O');
+        
 
+        std::string start_str = "Start at " + start_lat_str + ", " + start_lon_str;
+        desc.push_back(start_str);
+
+        for(auto i = 1; i < path.size(); i++){
+            TTripStep stop = path[i];
+            TNodeID nodeID = stop.second;
+            auto node = DStreetMap->NodeByID(nodeID);
+            auto node_loc = node->Location();
+            double lat = node_loc.first;
+            double lon = node_loc.second;
+            std::string lat_str = convertDMS(lat, 'L');
+            std::string lon_str = convertDMS(lon, 'O');
+            
+
+        }
     }
+
+    
+
 };
 // second 4:05
 
@@ -234,6 +263,38 @@ double CDijkstraTransportationPlanner::FindFastestPath(TNodeID src, TNodeID dest
 
 bool  CDijkstraTransportationPlanner::GetPathDescription(const std::vector< TTripStep > &path, std::vector< std::string > &desc) const{
     return DImplementation->GetPathDescription(path,desc);
+}
+
+static std::string convertDMS(double degrees, char type) {
+        std::string str = "";
+    // Determine the direction based on the type (latitude or longitude) and the value
+        char direction = ' ';
+        if (type == 'L') { // Latitude
+            direction = (degrees >= 0) ? 'N' : 'S';
+        } else if (type == 'O') { // Longitude
+            direction = (degrees >= 0) ? 'E' : 'W';
+        }
+        degrees = fabs(degrees); // Ensure the degrees are positive for calculation
+
+        // Calculate degrees, minutes, and seconds
+        int d = static_cast<int>(degrees);
+        double minutesDecimal = (degrees - d) * 60;
+        int m = static_cast<int>(minutesDecimal);
+        int s = static_cast<int>((minutesDecimal - m) * 60);
+
+        std::string ds = std::to_string(d);
+        std::string ms = std::to_string(m);
+        std::string ss = std::to_string(s);
+
+        str.append(ds);
+        str.append("d ");
+        str.append(ms);
+        str.append("' ");
+        str.append(ss);
+        str.append("\" ");
+        str + direction;
+
+        return str;  
 }
 
 

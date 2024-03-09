@@ -14,7 +14,7 @@ LDFLAGS = -lpthread -lgtest -lgtest_main -lexpat
 
 all: directories runtests
 
-runtests: teststrutils teststrdatasource teststrdatasink testdsv testxml testcsvbs testosm testfiledatass testkml testdijkstra testdpr  testBusSystemIndexer testcsvbsi testtpcl testtp
+runtests: teststrutils teststrdatasource teststrdatasink testdsv testxml testcsvbs testosm testfiledatass testkml testdijkstra testdpr  testBusSystemIndexer testcsvbsi testDijkstraTrans testtpcl testtp
 
 teststrutils: $(BIN_DIR)/teststrutils
 	$(BIN_DIR)/teststrutils
@@ -54,6 +54,10 @@ testBusSystemIndexer: $(BIN_DIR)/testBusSystemIndexer
 
 testcsvbsi: $(BIN_DIR)/testcsvbsi
 	$(BIN_DIR)/testcsvbsi
+
+#added thsi before testing command line to test dijkstra trans
+testDijkstraTrans: $(BIN_DIR)/testDijkstraTrans
+	$(BIN_DIR)/testDijkstraTrans
 
 testtpcl: $(BIN_DIR)/testtpcl
 	$(BIN_DIR)/testtpcl
@@ -197,23 +201,31 @@ $(OBJ_DIR)/BusSystemIndexer.o: $(SRC_DIR)/BusSystemIndexer.cpp $(INC_DIR)/BusSys
 $(OBJ_DIR)/CSVBusSystemIndexerTest.o: $(TEST_SRC_DIR)/CSVBusSystemIndexerTest.cpp $(INC_DIR)/BusSystemIndexer.h
 	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/CSVBusSystemIndexerTest.cpp
 
-$(BIN_DIR)/testBusSystemIndexer: $(OBJ_DIR)/BusSystemIndexer.o $(OBJ_DIR)/CSVBusSystemIndexerTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o $(OBJ_DIR)CDSVReader.o
+# #Arnav test 2
+# $(OBJ_DIR)/CDSVReader.o: $(SRC_DIR)/CDSVReader.cpp $(INC_DIR)/CDSVReader.h
+# 	$(CXX) -o $@ -c $(CXXFLAGS) $(SRC_DIR)/CDSVReader.cpp
+
+$(BIN_DIR)/testBusSystemIndexer: $(OBJ_DIR)/BusSystemIndexer.o $(OBJ_DIR)/CSVBusSystemIndexerTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o $(OBJ_DIR)/DSVReader.o $(OBJ_DIR)/DSVWriter.o $(OBJ_DIR)/CSVBusSystem.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 # testcsvbsi executable
-$(BIN_DIR)/testcsvbsi: $(OBJ_DIR)/BusSystemIndexer.o $(OBJ_DIR)/CSVBusSystemIndexerTest.o
+$(BIN_DIR)/testcsvbsi: $(OBJ_DIR)/BusSystemIndexer.o $(OBJ_DIR)/CSVBusSystemIndexerTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o $(OBJ_DIR)/DSVReader.o $(OBJ_DIR)/DSVWriter.o $(OBJ_DIR)/CSVBusSystem.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-# TransportationPlannerCommandLine
-$(OBJ_DIR)/TransportationPlannerCommandLine.o: $(SRC_DIR)/TransportationPlannerCommandLine.cpp $(INC_DIR)/TransportationPlannerCommandLine.h
-	$(CXX) -o $@ -c $(CXXFLAGS) $(SRC_DIR)/TransportationPlannerCommandLine.cpp
+# # TransportationPlannerCommandLine
+# $(OBJ_DIR)/TransportationPlannerCommandLine.o: $(SRC_DIR)/TransportationPlannerCommandLine.cpp $(INC_DIR)/TransportationPlannerCommandLine.h
+# 	$(CXX) -o $@ -c $(CXXFLAGS) $(SRC_DIR)/TransportationPlannerCommandLine.cpp
 
-# TPCommandLineTest
-$(OBJ_DIR)/TPCommandLineTest.o: $(TEST_SRC_DIR)/TPCommandLineTest.cpp $(INC_DIR)/TransportationPlannerCommandLine.h
-	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/TPCommandLineTest.cpp
+# # TPCommandLineTest
+# $(OBJ_DIR)/TPCommandLineTest.o: $(TEST_SRC_DIR)/TPCommandLineTest.cpp $(INC_DIR)/TransportationPlannerCommandLine.h
+# 	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/TPCommandLineTest.cpp
 
-# testtpcl executable
-$(BIN_DIR)/testtpcl: $(OBJ_DIR)/TransportationPlannerCommandLine.o $(OBJ_DIR)/TPCommandLineTest.o
+# # testtpcl executable
+# $(BIN_DIR)/testtpcl: $(OBJ_DIR)/TransportationPlannerCommandLine.o $(OBJ_DIR)/TPCommandLineTest.o
+# 	$(CXX) -o $@ $^ $(LDFLAGS)
+
+#Arnav Test 3
+$(BIN_DIR)/testDijkstraTrans: $(OBJ_DIR)/DijkstraTransportationPlanner.o $(OBJ_DIR)/CSVOSMTransportationPlannerTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 # DijkstraTransportationPlanner
