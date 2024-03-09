@@ -14,7 +14,7 @@ LDFLAGS = -lpthread -lgtest -lgtest_main -lexpat
 
 all: directories runtests
 
-runtests: teststrutils teststrdatasource teststrdatasink testdsv testxml testcsvbs testosm testfiledatass testkml testdijkstra testdpr testcsvbsi testtpcl testtp
+runtests: teststrutils teststrdatasource teststrdatasink testdsv testxml testcsvbs testosm testfiledatass testkml testdijkstra testdpr  testBusSystemIndexer testcsvbsi testtpcl testtp
 
 teststrutils: $(BIN_DIR)/teststrutils
 	$(BIN_DIR)/teststrutils
@@ -48,6 +48,9 @@ testdijkstra: $(BIN_DIR)/testdijkstra
 
 testdpr: $(BIN_DIR)/testdpr
 	$(BIN_DIR)/testdpr
+
+testBusSystemIndexer: $(BIN_DIR)/testBusSystemIndexer
+	$(BIN_DIR)/testBusSystemIndexer
 
 testcsvbsi: $(BIN_DIR)/testcsvbsi
 	$(BIN_DIR)/testcsvbsi
@@ -178,11 +181,12 @@ $(OBJ_DIR)/DijkstraPathRouter.o: $(SRC_DIR)/DijkstraPathRouter.cpp $(INC_DIR)/Di
 $(OBJ_DIR)/DijkstraTest.o: $(TEST_SRC_DIR)/DijkstraTest.cpp $(INC_DIR)/DijkstraPathRouter.h
 	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/DijkstraTest.cpp
 
+# Arnav test
 $(BIN_DIR)/testdijkstra: $(OBJ_DIR)/DijkstraPathRouter.o $(OBJ_DIR)/DijkstraTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 # testdpr executable
-$(BIN_DIR)/testdpr: $(OBJ_DIR)/DijkstraPathRouter.o $(OBJ_DIR)/DijkstraPathRouterTest.o
+$(BIN_DIR)/testdpr: $(OBJ_DIR)/DijkstraPathRouter.o $(OBJ_DIR)/DijkstraTest.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 # BusSystemIndexer
@@ -192,6 +196,9 @@ $(OBJ_DIR)/BusSystemIndexer.o: $(SRC_DIR)/BusSystemIndexer.cpp $(INC_DIR)/BusSys
 # CSVBusSystemIndexerTest
 $(OBJ_DIR)/CSVBusSystemIndexerTest.o: $(TEST_SRC_DIR)/CSVBusSystemIndexerTest.cpp $(INC_DIR)/BusSystemIndexer.h
 	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/CSVBusSystemIndexerTest.cpp
+
+$(BIN_DIR)/testBusSystemIndexer: $(OBJ_DIR)/BusSystemIndexer.o $(OBJ_DIR)/CSVBusSystemIndexerTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o $(OBJ_DIR)CDSVReader.o
+	$(CXX) -o $@ $^ $(LDFLAGS)
 
 # testcsvbsi executable
 $(BIN_DIR)/testcsvbsi: $(OBJ_DIR)/BusSystemIndexer.o $(OBJ_DIR)/CSVBusSystemIndexerTest.o
