@@ -14,7 +14,7 @@ LDFLAGS = -lpthread -lgtest -lgtest_main -lexpat
 
 all: directories runtests
 
-runtests: teststrutils teststrdatasource teststrdatasink testdsv testxml testcsvbs testosm testfiledatass testkml testdpr testcsvbsi testtpcl testtp
+runtests: teststrutils teststrdatasource teststrdatasink testdsv testxml testcsvbs testosm testfiledatass testkml testdijkstra testdpr testcsvbsi testtpcl testtp
 
 teststrutils: $(BIN_DIR)/teststrutils
 	$(BIN_DIR)/teststrutils
@@ -42,6 +42,9 @@ testfiledatass: $(BIN_DIR)/testfiledatass
 
 testkml: $(BIN_DIR)/testkml
 	$(BIN_DIR)/testkml
+
+testdijkstra: $(BIN_DIR)/testdijkstra
+	$(BIN_DIR)/testdijkstra
 
 testdpr: $(BIN_DIR)/testdpr
 	$(BIN_DIR)/testdpr
@@ -172,8 +175,11 @@ $(OBJ_DIR)/DijkstraPathRouter.o: $(SRC_DIR)/DijkstraPathRouter.cpp $(INC_DIR)/Di
 	$(CXX) -o $@ -c $(CXXFLAGS) $(SRC_DIR)/DijkstraPathRouter.cpp
 
 # DijkstraPathRouterTest
-$(OBJ_DIR)/DijkstraPathRouterTest.o: $(TEST_SRC_DIR)/DijkstraPathRouterTest.cpp $(INC_DIR)/DijkstraPathRouter.h
-	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/DijkstraPathRouterTest.cpp
+$(OBJ_DIR)/DijkstraTest.o: $(TEST_SRC_DIR)/DijkstraTest.cpp $(INC_DIR)/DijkstraPathRouter.h
+	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/DijkstraTest.cpp
+
+$(BIN_DIR)/testdijkstra: $(OBJ_DIR)/DijkstraPathRouter.o $(OBJ_DIR)/DijkstraTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o
+	$(CXX) -o $@ $^ $(LDFLAGS)
 
 # testdpr executable
 $(BIN_DIR)/testdpr: $(OBJ_DIR)/DijkstraPathRouter.o $(OBJ_DIR)/DijkstraPathRouterTest.o
