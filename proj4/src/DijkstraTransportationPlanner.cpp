@@ -5,7 +5,9 @@
 #include "GeographicUtils.h"
 #include "BusSystemIndexer.cpp"
 #include <unordered_map>
-#include <algorithm> // For std::sort
+#include <algorithm>
+#include <iostream>
+#include <cmath>  // For std::sort
 
 struct CDijkstraTransportationPlanner::SImplementation{
     std::shared_ptr< CStreetMap > DStreetMap;
@@ -18,6 +20,39 @@ struct CDijkstraTransportationPlanner::SImplementation{
     CDijkstraPathRouter DFastestPathRouterBike;
     CDijkstraPathRouter DFastestPathRouterWalkBus;
     std::vector<std::shared_ptr<CStreetMap::SNode>> Sorted;
+    
+
+    std::string convertDMS(double degrees, char type) const{
+        std::string str = "";
+    // Determine the direction based on the type (latitude or longitude) and the value
+        char direction = ' ';
+        if (type == 'L') { // Latitude
+            direction = (degrees >= 0) ? 'N' : 'S';
+        } else if (type == 'O') { // Longitude
+            direction = (degrees >= 0) ? 'E' : 'W';
+        }
+        degrees = fabs(degrees); // Ensure the degrees are positive for calculation
+
+        // Calculate degrees, minutes, and seconds
+        int d = static_cast<int>(degrees);
+        double minutesDecimal = (degrees - d) * 60;
+        int m = static_cast<int>(minutesDecimal);
+        int s = static_cast<int>((minutesDecimal - m) * 60);
+
+        std::string ds = std::to_string(d);
+        std::string ms = std::to_string(m);
+        std::string ss = std::to_string(s);
+
+        str.append(ds);
+        str.append("d ");
+        str.append(ms);
+        str.append("' ");
+        str.append(ss);
+        str.append("\" ");
+        str + direction;
+
+        return str;  
+}
 
 
 
@@ -28,12 +63,19 @@ struct CDijkstraTransportationPlanner::SImplementation{
         for(size_t Index = 0; Index < DStreetMap->NodeCount(); Index++){
             auto Node = DStreetMap->NodeByIndex(Index);
             Sorted.push_back(Node);
+            // std::sort(Sorted.begin(), Sorted.end(), [](const std::shared_ptr<CStreetMap::SNode>& a, const std::shared_ptr<CStreetMap::SNode>& b) {
+            // return a->ID() < b->ID(); // Assuming each SNode has an ID method for comparison
+            // });//changed here ------------------
             auto VertexID = DShortestPathRouter.AddVertex(Node->ID());// add a vertex and label it by its node id
             // here there is only the shortest path router we should add them to fastest to the two and do the ecaxt same thing and assume they will be using the same vertex id
             DFastestPathRouterBike.AddVertex(Node->ID());
             DFastestPathRouterWalkBus.AddVertex(Node->ID());
             DNodeToVertexID[Node->ID()] = VertexID; 
         }
+        std::sort(Sorted.begin(), Sorted.end(), [](const std::shared_ptr<CStreetMap::SNode>& a, const std::shared_ptr<CStreetMap::SNode>& b) {
+            return a->ID() < b->ID(); // Assuming each SNode has an ID method for comparison
+            });//changed here ------------------
+            
         // now go to edges
         for(size_t Index = 0; Index < DStreetMap->WayCount();Index++){
             auto Way = DStreetMap->WayByIndex(Index);
@@ -130,14 +172,15 @@ struct CDijkstraTransportationPlanner::SImplementation{
         return DStreetMap->NodeCount();
     }
 
-    std::shared_ptr<CStreetMap::SNode> SortedNodeByIndex(std::size_t index) const noexcept{
+    std::shared_ptr<CStreetMap::SNode> SortedNodeByIndex(std::size_t index) const noexcept {
         // create a vector of these and sort them using standart sort , similar to the bus system
-        std::sort(Sorted.begin(), Sorted.end());
+        //std::sort(Sorted.begin(), Sorted.end());
 
         if(index < Sorted.size()){
             return Sorted[index];
-        }
-        if(index >= Sorted.size()){
+        }else
+        //if(index >= Sorted.size())
+        {
             return nullptr;
         }
     }
@@ -202,8 +245,35 @@ struct CDijkstraTransportationPlanner::SImplementation{
     }
 
     bool GetPathDescription(const std::vector< TTripStep >&path, std::vector < std::string > &desc) const{
+        TTripStep start = path[0];
+        TNodeID start_nodeID = start.second;
+        auto start_node = DStreetMap->NodeByID(start_nodeID);
+        auto start_node_loc = start_node->Location();
+        double start_lat = start_node_loc.first;
+        double start_lon = start_node_loc.second;
+        std::string start_lat_str = convertDMS(start_lat, 'L');
+        std::string start_lon_str = convertDMS(start_lon, 'O');
+        
 
+        std::string start_str = "Start at " + start_lat_str + ", " + start_lon_str;
+        desc.push_back(start_str);
+
+        for(auto i = 1; i < path.size(); i++){
+            TTripStep stop = path[i];
+            TNodeID nodeID = stop.second;
+            auto node = DStreetMap->NodeByID(nodeID);
+            auto node_loc = node->Location();
+            double lat = node_loc.first;
+            double lon = node_loc.second;
+            std::string lat_str = convertDMS(lat, 'L');
+            std::string lon_str = convertDMS(lon, 'O');
+            
+
+        }
     }
+
+    
+
 };
 // second 4:05
 
