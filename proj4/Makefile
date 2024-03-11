@@ -14,7 +14,7 @@ LDFLAGS = -lpthread -lgtest -lgtest_main -lexpat
 
 all: directories runtests
 
-runtests: teststrutils teststrdatasource teststrdatasink testdsv testxml testcsvbs testosm testfiledatass testkml testdpr testBusSystemIndexer testcsvbsi  testtp #testtpcl testttp
+runtests: teststrutils teststrdatasource teststrdatasink testdsv testxml testcsvbs testosm testfiledatass testkml testdpr testBusSystemIndexer testcsvbsi testtp #testtpcl testttp
 
 teststrutils: $(BIN_DIR)/teststrutils
 	$(BIN_DIR)/teststrutils
@@ -52,11 +52,12 @@ testBusSystemIndexer: $(BIN_DIR)/testBusSystemIndexer
 testcsvbsi: $(BIN_DIR)/testcsvbsi
 	$(BIN_DIR)/testcsvbsi
 
+testtp: $(BIN_DIR)/testtp
+	$(BIN_DIR)/testtp
+
 testtpcl: $(BIN_DIR)/testtpcl
 	$(BIN_DIR)/testtpcl
 
-testtp: $(BIN_DIR)/testtp
-	$(BIN_DIR)/testtp
 
 
 # String Utils
@@ -214,7 +215,7 @@ $(OBJ_DIR)/TPCommandLineTest.o: $(TEST_SRC_DIR)/TPCommandLineTest.cpp $(INC_DIR)
 	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/TPCommandLineTest.cpp
 
 # testtpcl executable
-$(BIN_DIR)/testtpcl: $(OBJ_DIR)/TransportationPlannerCommandLine.o $(OBJ_DIR)/TPCommandLineTest.o
+$(BIN_DIR)/testtpcl: $(OBJ_DIR)/TransportationPlannerCommandLine.o $(OBJ_DIR)/TPCommandLineTest.o $(OBJ_DIR)/CSVOSMTransportationPlannerTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o $(OBJ_DIR)/XMLReader.o $(OBJ_DIR)/DSVReader.o $(OBJ_DIR)/DSVWriter.o $(OBJ_DIR)/CSVBusSystem.o $(OBJ_DIR)/OpenStreetMap.o $(OBJ_DIR)/GeographicUtils.o $(OBJ_DIR)/DijkstraPathRouter.o $(OBJ_DIR)/BusSystemIndexer.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #Arnav Test 3
