@@ -1,7 +1,15 @@
+#include <memory> 
 #include "TransportationPlannerCommandLine.h"
 #include <iostream>
+#include "GeographicUtils.h"
 #include <sstream>
-#include <string>
+#include "StringDataSink.h"
+#include "StringUtils.h"
+#include "OpenStreetMap.h"
+#include "BusSystem.h"
+#include "StringDataSource.h"
+#include "StandardDataSource.h"
+#include "StandardDataSink.h" 
 
 struct CTransportationPlannerCommandLine::SImplementation {
     std::shared_ptr<CDataSource> CmdSrc;
@@ -18,7 +26,6 @@ struct CTransportationPlannerCommandLine::SImplementation {
         : CmdSrc(cmdsrc), OutSink(outsink), ErrSink(errsink),
           Results(results), Planner(planner) {}
 
-    // Helper function to parse a command line
     std::vector<std::string> ParseCommandLine(const std::string& line) {
         std::istringstream iss(line);
         std::vector<std::string> tokens;
@@ -29,37 +36,95 @@ struct CTransportationPlannerCommandLine::SImplementation {
         return tokens;
     }
 
-    // Process a 'find shortest path' command
-    void FindShortestPathCommand(const std::vector<std::string>& tokens) {
-        if (tokens.size() != 3) {
-            ErrSink->Write("Error: Expected 2 arguments for 'shortest_path'\n");
+    // Adapted FindShortestPathCommand to include parsing and handling for all required commands
+    void HandleCommand(const std::vector<std::string>& tokens) {
+    if (tokens.empty()) return;
+
+    const std::string& command = tokens[0];
+    if (command == "help") {
+        // Existing help command implementation
+    } else if (command == "exit") {
+        // Exit command does not need implementation here as it's handled in ProcessCommands()
+    } else if (command == "count") {
+        size_t nodeCount = Planner->NodeCount();
+        OutSink->Write(std::to_string(nodeCount) + " nodes\n");
+    } else if (command == "node") {
+        if (tokens.size() < 2) {
+            ErrSink->Write("Error: 'node' command requires an index argument.\n");
             return;
         }
-        TNodeID src = std::stoull(tokens[1]);
-        TNodeID dest = std::stoull(tokens[2]);
-        std::vector<TNodeID> path;
-        double path_length = Planner->FindShortestPath(src, dest, path);
-        if (path_length < 0) {
-            OutSink->Write("No path exists\n");
+        size_t index = std::stoul(tokens[1]);
+        auto node = Planner->SortedNodeByIndex(index);
+        if (node) {
+            std::ostringstream nodeText;
+            nodeText << "Node " << index << ": id = " << node->ID() << ", location = " << node->Location().first << ", " << node->Location().second << "\n";
+            OutSink->Write(nodeText.str());
         } else {
-            OutSink->Write("Shortest path length: " + std::to_string(path_length) + "\n");
-            // Optionally: output the actual path
+            ErrSink->Write("Error: Invalid node index.\n");
         }
+    } else if (command == "fastest" || command == "shortest") {
+        if (tokens.size() < 3) {
+            ErrSink->Write("Error: '" + command + "' command requires start and end node IDs.\n");
+            return;
+        }
+        TNodeID src = std::stoul(tokens[1]);
+        TNodeID dest = std::stoul(tokens[2]);
+        if (command == "fastest") {
+            std::vector<CTransportationPlanner::TTripStep> path;
+            double time = Planner->FindFastestPath(src, dest, path);
+            if (time >= 0) {
+                OutSink->Write("Fastest path takes " + std::to_string(time) + " units of time.\n");
+            } else {
+                ErrSink->Write("No path exists.\n");
+            }
+        } else { // shortest
+            std::vector<TNodeID> path;
+            double distance = Planner->FindShortestPath(src, dest, path);
+            if (distance >= 0) {
+                OutSink->Write("Shortest path is " + std::to_string(distance) + " units of distance.\n");
+            } else {
+                ErrSink->Write("No path exists.\n");
+            }
+        }
+    } else if (command == "save") {
+        // Example implementation for 'save' - adjust according to your application
+        if (path.empty()) {
+            ErrSink->Write("No path to save.\n");
+            return;
+        }
+        std::string filename = "last_path.txt";
+        std::ofstream outFile(filename);
+        if (!outFile) {
+            ErrSink->Write("Error opening file for saving.\n");
+            return;
+        }
+        for (auto& step : path) {
+            outFile << "Step: Mode = " << std::to_string(static_cast<int>(step.first)) << ", Node ID = " << step.second << "\n";
+        }
+        outFile.close();
+        OutSink->Write("Path saved to " + filename + "\n");
+    } else if (command == "print") {
+        // Example implementation for 'print' - adjust according to your application
+        if (path.empty()) {
+            ErrSink->Write("No path to print.\n");
+            return;
+        }
+        for (auto& step : path) {
+            OutSink->Write("Step: Mode = " + std::to_string(static_cast<int>(step.first)) + ", Node ID = " + std::to_string(step.second) + "\n");
+        }
+    } else {
+        ErrSink->Write("Error: Unknown command '" + command + "'\n");
     }
+}
 
-    // Process commands read from the command source
     bool ProcessCommands() {
         std::string command_line;
         while (CmdSrc->Read(command_line)) {
             auto tokens = ParseCommandLine(command_line);
-            if (tokens.empty()) continue;
-            if (tokens[0] == "exit") {
+            if (!tokens.empty() && tokens[0] == "exit") {
                 break;
-            } else if (tokens[0] == "shortest_path") {
-                FindShortestPathCommand(tokens);
-            } else {
-                ErrSink->Write("Error: Unknown command '" + tokens[0] + "'\n");
             }
+            HandleCommand(tokens);
         }
         return true;
     }
@@ -77,3 +142,5 @@ CTransportationPlannerCommandLine::~CTransportationPlannerCommandLine() {}
 bool CTransportationPlannerCommandLine::ProcessCommands() {
     return DImplementation->ProcessCommands();
 }
+
+

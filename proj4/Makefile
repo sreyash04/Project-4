@@ -14,7 +14,7 @@ LDFLAGS = -lpthread -lgtest -lgtest_main -lexpat
 
 all: directories runtests
 
-runtests: teststrutils teststrdatasource teststrdatasink testdsv testxml testcsvbs testosm testfiledatass testkml testdijkstra testdpr  testBusSystemIndexer testcsvbsi testDijkstraTrans testtpcl testtp
+runtests: teststrutils teststrdatasource teststrdatasink testdsv testxml testcsvbs testosm testfiledatass testkml testdpr testBusSystemIndexer testcsvbsi  testtp #testtpcl testttp
 
 teststrutils: $(BIN_DIR)/teststrutils
 	$(BIN_DIR)/teststrutils
@@ -43,9 +43,6 @@ testfiledatass: $(BIN_DIR)/testfiledatass
 testkml: $(BIN_DIR)/testkml
 	$(BIN_DIR)/testkml
 
-testdijkstra: $(BIN_DIR)/testdijkstra
-	$(BIN_DIR)/testdijkstra
-
 testdpr: $(BIN_DIR)/testdpr
 	$(BIN_DIR)/testdpr
 
@@ -54,10 +51,6 @@ testBusSystemIndexer: $(BIN_DIR)/testBusSystemIndexer
 
 testcsvbsi: $(BIN_DIR)/testcsvbsi
 	$(BIN_DIR)/testcsvbsi
-
-#added this before testing command line to test dijkstra trans
-testDijkstraTrans: $(BIN_DIR)/testDijkstraTrans
-	$(BIN_DIR)/testDijkstraTrans
 
 testtpcl: $(BIN_DIR)/testtpcl
 	$(BIN_DIR)/testtpcl
@@ -177,21 +170,20 @@ $(OBJ_DIR)/KMLTest.o: $(TEST_SRC_DIR)/KMLTest.cpp $(INC_DIR)/KMLWriter.h
 $(BIN_DIR)/testkml: $(OBJ_DIR)/KMLWriter.o $(OBJ_DIR)/KMLTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Arnav test
+$(BIN_DIR)/testdpr: $(OBJ_DIR)/DijkstraPathRouter.o $(OBJ_DIR)/CDijkstraPathRouterTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
 # DijkstraPathRouter
 $(OBJ_DIR)/DijkstraPathRouter.o: $(SRC_DIR)/DijkstraPathRouter.cpp $(INC_DIR)/DijkstraPathRouter.h
 	$(CXX) -o $@ -c $(CXXFLAGS) $(SRC_DIR)/DijkstraPathRouter.cpp
 
 # DijkstraPathRouterTest
-$(OBJ_DIR)/DijkstraTest.o: $(TEST_SRC_DIR)/DijkstraTest.cpp $(INC_DIR)/DijkstraPathRouter.h
-	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/DijkstraTest.cpp
+$(OBJ_DIR)/CDijkstraPathRouterTest.o: $(TEST_SRC_DIR)/CDijkstraPathRouterTest.cpp $(INC_DIR)/DijkstraPathRouter.h
+	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/CDijkstraPathRouterTest.cpp
 
-# Arnav test
-$(BIN_DIR)/testdijkstra: $(OBJ_DIR)/DijkstraPathRouter.o $(OBJ_DIR)/DijkstraTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o
-	$(CXX) -o $@ $^ $(LDFLAGS)
-
-# testdpr executable
-$(BIN_DIR)/testdpr: $(OBJ_DIR)/DijkstraPathRouter.o $(OBJ_DIR)/DijkstraTest.o
-	$(CXX) -o $@ $^ $(LDFLAGS)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # BusSystemIndexer
 $(OBJ_DIR)/BusSystemIndexer.o: $(SRC_DIR)/BusSystemIndexer.cpp $(INC_DIR)/BusSystemIndexer.h
@@ -202,8 +194,8 @@ $(OBJ_DIR)/CSVBusSystemIndexerTest.o: $(TEST_SRC_DIR)/CSVBusSystemIndexerTest.cp
 	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/CSVBusSystemIndexerTest.cpp
 
 # #Arnav test 2
-# $(OBJ_DIR)/CDSVReader.o: $(SRC_DIR)/CDSVReader.cpp $(INC_DIR)/CDSVReader.h
-# 	$(CXX) -o $@ -c $(CXXFLAGS) $(SRC_DIR)/CDSVReader.cpp
+$(OBJ_DIR)/CDSVReader.o: $(SRC_DIR)/CDSVReader.cpp $(INC_DIR)/CDSVReader.h
+	$(CXX) -o $@ -c $(CXXFLAGS) $(SRC_DIR)/CDSVReader.cpp
 
 $(BIN_DIR)/testBusSystemIndexer: $(OBJ_DIR)/BusSystemIndexer.o $(OBJ_DIR)/CSVBusSystemIndexerTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o $(OBJ_DIR)/DSVReader.o $(OBJ_DIR)/DSVWriter.o $(OBJ_DIR)/CSVBusSystem.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
@@ -212,20 +204,26 @@ $(BIN_DIR)/testBusSystemIndexer: $(OBJ_DIR)/BusSystemIndexer.o $(OBJ_DIR)/CSVBus
 $(BIN_DIR)/testcsvbsi: $(OBJ_DIR)/BusSystemIndexer.o $(OBJ_DIR)/CSVBusSystemIndexerTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o $(OBJ_DIR)/DSVReader.o $(OBJ_DIR)/DSVWriter.o $(OBJ_DIR)/CSVBusSystem.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-# # TransportationPlannerCommandLine
-# $(OBJ_DIR)/TransportationPlannerCommandLine.o: $(SRC_DIR)/TransportationPlannerCommandLine.cpp $(INC_DIR)/TransportationPlannerCommandLine.h
-# 	$(CXX) -o $@ -c $(CXXFLAGS) $(SRC_DIR)/TransportationPlannerCommandLine.cpp
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TransportationPlannerCommandLine
+$(OBJ_DIR)/TransportationPlannerCommandLine.o: $(SRC_DIR)/TransportationPlannerCommandLine.cpp $(INC_DIR)/TransportationPlannerCommandLine.h
+	$(CXX) -o $@ -c $(CXXFLAGS) $(SRC_DIR)/TransportationPlannerCommandLine.cpp
 
-# # TPCommandLineTest
-# $(OBJ_DIR)/TPCommandLineTest.o: $(TEST_SRC_DIR)/TPCommandLineTest.cpp $(INC_DIR)/TransportationPlannerCommandLine.h
-# 	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/TPCommandLineTest.cpp
+# TPCommandLineTest
+$(OBJ_DIR)/TPCommandLineTest.o: $(TEST_SRC_DIR)/TPCommandLineTest.cpp $(INC_DIR)/TransportationPlannerCommandLine.h
+	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/TPCommandLineTest.cpp
 
-# # testtpcl executable
-# $(BIN_DIR)/testtpcl: $(OBJ_DIR)/TransportationPlannerCommandLine.o $(OBJ_DIR)/TPCommandLineTest.o
-# 	$(CXX) -o $@ $^ $(LDFLAGS)
+# testtpcl executable
+$(BIN_DIR)/testtpcl: $(OBJ_DIR)/TransportationPlannerCommandLine.o $(OBJ_DIR)/TPCommandLineTest.o
+	$(CXX) -o $@ $^ $(LDFLAGS)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#Arnav Test 3
+# testtp executable
+$(BIN_DIR)/testtp: $(OBJ_DIR)/DijkstraTransportationPlanner.o $(OBJ_DIR)/CSVOSMTransportationPlannerTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o $(OBJ_DIR)/XMLReader.o $(OBJ_DIR)/DSVReader.o $(OBJ_DIR)/DSVWriter.o $(OBJ_DIR)/CSVBusSystem.o $(OBJ_DIR)/OpenStreetMap.o $(OBJ_DIR)/GeographicUtils.o $(OBJ_DIR)/DijkstraPathRouter.o $(OBJ_DIR)/BusSystemIndexer.o
+	$(CXX) -o $@ $^ $(LDFLAGS)
 
 # DijkstraTransportationPlanner # made a change here
-$(OBJ_DIR)/DijkstraTransportationPlanner.o: $(SRC_DIR)/DijkstraTransportationPlanner.cpp $(INC_DIR)/TransportationPlanner.h $(INC_DIR)/DijkstraTransportationPlanner.h
+$(OBJ_DIR)/DijkstraTransportationPlanner.o: $(SRC_DIR)/DijkstraTransportationPlanner.cpp $(INC_DIR)/DijkstraTransportationPlanner.h
 	$(CXX) -o $@ -c $(CXXFLAGS) $(SRC_DIR)/DijkstraTransportationPlanner.cpp
 
 
@@ -236,23 +234,7 @@ $(OBJ_DIR)/CSVOSMTransportationPlannerTest.o: $(TEST_SRC_DIR)/CSVOSMTransportati
 # making geopgraphic utils
 $(OBJ_DIR)/GeographicUtils.o: $(SRC_DIR)/GeographicUtils.cpp $(INC_DIR)/GeographicUtils.h
 	$(CXX) -o $(OBJ_DIR)/GeographicUtils.o -c $(CXXFLAGS) $(SRC_DIR)/GeographicUtils.cpp
-
-#Arnav Test 3
-$(BIN_DIR)/testDijkstraTrans: $(OBJ_DIR)/DijkstraTransportationPlanner.o $(OBJ_DIR)/CSVOSMTransportationPlannerTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o $(OBJ_DIR)/XMLReader.o $(OBJ_DIR)/DSVReader.o $(OBJ_DIR)/DSVWriter.o $(OBJ_DIR)/CSVBusSystem.o $(OBJ_DIR)/OpenStreetMap.o $(OBJ_DIR)/GeographicUtils.o $(OBJ_DIR)/DijkstraPathRouter.o
-	$(CXX) -o $@ $^ $(LDFLAGS)
-
-$(BIN_DIR)/testtpcl: $(OBJ_DIR)/DijkstraTransportationPlanner.o $(OBJ_DIR)/CSVOSMTransportationPlannerTest.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/StringUtils.o $(OBJ_DIR)/StringDataSink.o $(OBJ_DIR)/StringDataSource.o $(OBJ_DIR)/DSVReader.o $(OBJ_DIR)/DSVWriter.o $(OBJ_DIR)/CSVBusSystem.o $(OBJ_DIR)/XMLWriter.o $(OBJ_DIR)/XMLReader.o $(OBJ_DIR)/OpenStreetMap.o $(OBJ_DIR)/GeographicUtils.o $(OBJ_DIR)/DijkstraPathRouter.o
-	$(CXX) -o $@ $^ $(LDFLAGS)
-
-
-
-# # CSVOSMTransportationPlannerTest
-# $(OBJ_DIR)/CSVOSMTransportationPlannerTest.o: $(TEST_SRC_DIR)/CSVOSMTransportationPlannerTest.cpp $(INC_DIR)/CSVOSMTransportationPlanner.h
-# 	$(CXX) -o $@ -c $(CXXFLAGS) $(TEST_SRC_DIR)/CSVOSMTransportationPlannerTest.cpp
-
-# testtp executable
-$(BIN_DIR)/testtp: $(OBJ_DIR)/DijkstraTransportationPlanner.o $(OBJ_DIR)/CSVOSMTransportationPlannerTest.o # Add paths to other dependency object files here
-	$(CXX) -o $@ $^ $(LDFLAGS)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
