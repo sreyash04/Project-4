@@ -5,6 +5,18 @@ STUDENT 1: Arnav Suden 918550383
 
 STUDENT 2: Sreyash Ravinuthala 920484337
 
+#Code References:
+
+[gtest syntax](https://github.com/google/googletest/blob/main/googletest/samples/sample6_unittest.cc)
+
+[pimpl implementation](https://www.geeksforgeeks.org/pimpl-idiom-in-c-with-examples/)
+
+[$@ in makefile](https://stackoverflow.com/questions/3220277/what-do-the-makefile-symbols-and-mean)
+
+[Makefile syntax](https://web.stanford.edu/class/archive/cs/cs107/cs107.1174/guide_make.html)
+
+[C++ switch](https://www.w3schools.com/cpp/cpp_switch.asp)
+
 PROJECT STATUS
 Everything works need to test out TransportationCommandLine.cpp file and have attempted the extra credit Get Path Description, and tried to optimize DijkstraPathRouter
 ------------------------
@@ -317,11 +329,129 @@ RESPONSE 9
     return Distance;
 }
 -----------------------------------------------------------------
-PROMT 10
-Asked Chat GPT To review simple test cases for DijkstraPathRouter and make any necessary changes needed
-RESPONSE 10
-Asked Chat GPT To review simple test cases for DijkstraPathRouter and make any necessary changes needed
------------------------------------------------------------------
-PROMT 11
+### Prompt 1:
 
-RESPONSE 11
+This is what the command line.h file looks like "#ifndef TRANSPORTATIONPLANNERCOMMANDLINE_H
+#define TRANSPORTATIONPLANNERCOMMANDLINE_H
+
+#include "DataFactory.h"
+#include "TransportationPlanner.h"
+#include <memory>
+#include <vector>
+
+class CTransportationPlannerCommandLine{
+    private:
+        struct SImplementation;
+        std::unique_ptr<SImplementation> DImplementation;
+    public:
+        CTransportationPlannerCommandLine(std::shared_ptr<CDataSource> cmdsrc, std::shared_ptr<CDataSink> outsink, std::shared_ptr<CDataSink> errsink, std::shared_ptr<CDataFactory> results, std::shared_ptr<CTransportationPlanner> planner);
+        ~CTransportationPlannerCommandLine();
+        bool ProcessCommands();
+};
+
+#endif
+" Could you provide me with a skelton structure for TransportationPlannerCommandLine.cpp
+
+### Response 1:
+
+Key Points for Implementation:
+SImplementation Struct: This struct will hold all data members and methods that are part of the CTransportationPlannerCommandLine's implementation. This typically includes resources like data sources, data sinks, data factories, and the transportation planner itself.
+
+Constructor and Destructor: The constructor will initialize the DImplementation unique pointer with instances of required resources. The destructor will take care of automatically cleaning up these resources when an instance of CTransportationPlannerCommandLine is destroyed.
+
+ProcessCommands Method: This method will implement the logic to read commands from the command source, parse them, and then dispatch them to the appropriate handler methods that utilize the CTransportationPlanner and other resources to perform actions.
+
+TransportationPlannerCommandLine.cpp Implementation Sketch
+cpp
+Copy code
+#include "TransportationPlannerCommandLine.h"
+#include "DataSource.h"
+#include "DataSink.h"
+// Include other necessary headers...
+
+struct CTransportationPlannerCommandLine::SImplementation {
+    std::shared_ptr<CDataSource> CommandSource;
+    std::shared_ptr<CDataSink> OutputSink;
+    std::shared_ptr<CDataSink> ErrorSink;
+    std::shared_ptr<CDataFactory> Results;
+    std::shared_ptr<CTransportationPlanner> Planner;
+
+    // Constructor for SImplementation
+    SImplementation(std::shared_ptr<CDataSource> cmdsrc, std::shared_ptr<CDataSink> outsink, std::shared_ptr<CDataSink> errsink, std::shared_ptr<CDataFactory> results, std::shared_ptr<CTransportationPlanner> planner)
+    : CommandSource(std::move(cmdsrc)), OutputSink(std::move(outsink)), ErrorSink(std::move(errsink)), Results(std::move(results)), Planner(std::move(planner)) {}
+
+    // Methods for command processing...
+    void ProcessCommand(const std::string& command) {
+        // Implement command processing logic here
+        // For example, parse the command and call the corresponding method on the Planner
+    }
+};
+
+CTransportationPlannerCommandLine::CTransportationPlannerCommandLine(std::shared_ptr<CDataSource> cmdsrc, std::shared_ptr<CDataSink> outsink, std::shared_ptr<CDataSink> errsink, std::shared_ptr<CDataFactory> results, std::shared_ptr<CTransportationPlanner> planner)
+: DImplementation(std::make_unique<SImplementation>(std::move(cmdsrc), std::move(outsink), std::move(errsink), std::move(results), std::move(planner))) {}
+
+CTransportationPlannerCommandLine::~CTransportationPlannerCommandLine() = default;
+
+bool CTransportationPlannerCommandLine::ProcessCommands() {
+    std::string command;
+    // Assume CommandSource provides a way to read commands as strings
+    while (DImplementation->CommandSource->ReadCommand(command)) {
+        DImplementation->ProcessCommand(command);
+        // You might want to handle errors or invalid commands
+    }
+    return true; // or false based on command processing success/failure
+}
+
+### Changes 1
+
+Providing me with a starting ground for the command line file and an idea of where I must start.
+
+
+### Prompt 2:
+
+I am finding trouble with the bool bool "CTransportationPlannerCommandLine::ProcessCommands(){
+    st::string command;
+}" could you find the errors in the code and help fix it 
+
+
+### Response 2:
+bool CTransportationPlannerCommandLine::ProcessCommands() {
+    std::string command;
+    while (DImplementation->CommandSource->ReadCommand(command)) {
+        std::istringstream commandStream(command);
+        std::string action, subAction;
+        commandStream >> action >> subAction;
+        if (action == "find") {
+            TNodeID src, dest;
+            commandStream >> src >> dest;
+            if (subAction == "shortest") {
+                // Assume DImplementation->Planner has a method like FindShortestPath(src, dest)
+                auto result = DImplementation->Planner->FindShortestPath(src, dest);
+                DImplementation->OutputSink->Write("Shortest path result: " + result);
+            } else if (subAction == "fastest") {
+                // Similar to FindShortestPath, for fastest path
+                auto result = DImplementation->Planner->FindFastestPath(src, dest);
+                DImplementation->OutputSink->Write("Fastest path result: " + result);
+            } else {
+                DImplementation->ErrorSink->Write("Invalid sub-action command.");
+            }
+        } else {
+            DImplementation->ErrorSink->Write("Unknown action command.");
+        }
+    }
+    return true; // Or false if any command processing failed
+}
+This implementation assumes:
+
+CDataSource::ReadCommand reads a command into the command string.
+Commands are structured in a way that the first word specifies the action (e.g., "find"), and the second specifies the sub-action (e.g., "shortest" or "fastest").
+TNodeID represents the node ID type, and src and dest are extracted from the command.
+FindShortestPath and FindFastestPath are methods provided by CTransportationPlanner, returning results that can be directly written to CDataSink.
+You will need to adjust this implementation to match the actual commands your application supports and the real interfaces of the involved components.
+
+### Changes 2:
+
+The implemtaiton of the commands is supossed to deal with Parsing Commands , Executing Commands and Handling the erros . I fixed the the fucntion and added these methods of implemtnation my file.
+
+********************************
+
