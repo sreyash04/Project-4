@@ -3,7 +3,9 @@
 #include "TransportationPlanner.h"
 #include "DijkstraPathRouter.h"
 #include "GeographicUtils.h"
-#include "BusSystemIndexer.cpp"
+#include "BusSystemIndexer.h"
+#include "CSVBusSystem.h"
+#include "BusSystem.h"
 #include <unordered_map>
 #include <algorithm>
 #include <iostream>
@@ -12,16 +14,17 @@
 struct CDijkstraTransportationPlanner::SImplementation{
     std::shared_ptr< CStreetMap > DStreetMap;
     std::shared_ptr< CBusSystem > DBusSystem;
-    std::shared_ptr< SGeographicUtils > GeoUtils;
-    std::shared_ptr< CBusSystemIndexer > BusSystemIndex;
-    std::shared_ptr< STransportationPlannerConfig > Trans_plan;
     std::unordered_map< CStreetMap::TNodeID, CPathRouter::TVertexID > DNodeToVertexID;
     CDijkstraPathRouter DShortestPathRouter; // we want locals one for the shortest path pone for biking and one for walking plus bus
     CDijkstraPathRouter DFastestPathRouterBike;
     CDijkstraPathRouter DFastestPathRouterWalkBus;
     std::vector<std::shared_ptr<CStreetMap::SNode>> Sorted;
-    
-
+    std::shared_ptr< SGeographicUtils > GeoUtils = std::make_shared<SGeographicUtils>();
+    //std::shared_ptr< CBusSystemIndexer > BusSystemIndex  = std::make_shared<CBusSystemIndexer>();
+    //std::shared_ptr<CBusSystemIndexer> BusSystemIndex = std::make_shared<CBusSystemIndexer>(DBusSystem);
+    // std::shared_ptr< STransportationPlannerConfig > Trans_plan = std::make_shared<STransportationPlannerConfig>();
+    std::shared_ptr<CBusSystemIndexer> BusSystemIndex;
+    double speed = 25.0;
     std::string convertDMS(double degrees, char type) const{
         std::string str = "";
     // Determine the direction based on the type (latitude or longitude) and the value
@@ -56,13 +59,21 @@ struct CDijkstraTransportationPlanner::SImplementation{
 
 
 
-    SImplementation(std::shared_ptr<SConfiguration> config){
-        DStreetMap = config->StreetMap();
-        DBusSystem = config->BusSystem();
+    SImplementation(std::shared_ptr<CTransportationPlanner::SConfiguration> config){
+        // std::shared_ptr< STransportationPlannerConfig > Trans_plan = std::make_shared<STransportationPlannerConfig>();
+        auto transConfig = std::dynamic_pointer_cast<STransportationPlannerConfig>(config);
+        if (!transConfig) {
+            throw std::runtime_error("Configuration cast failed.");
+        }
+
+        DStreetMap = transConfig->StreetMap(); // prof
+        DBusSystem = transConfig->BusSystem(); //prof
+        BusSystemIndex = std::make_shared<CBusSystemIndexer>(DBusSystem);
+
 
         for(size_t Index = 0; Index < DStreetMap->NodeCount(); Index++){
             auto Node = DStreetMap->NodeByIndex(Index);
-            Sorted.push_back(Node);
+            //Sorted.push_back(Node);
             // std::sort(Sorted.begin(), Sorted.end(), [](const std::shared_ptr<CStreetMap::SNode>& a, const std::shared_ptr<CStreetMap::SNode>& b) {
             // return a->ID() < b->ID(); // Assuming each SNode has an ID method for comparison
             // });//changed here ------------------
@@ -70,7 +81,10 @@ struct CDijkstraTransportationPlanner::SImplementation{
             // here there is only the shortest path router we should add them to fastest to the two and do the ecaxt same thing and assume they will be using the same vertex id
             DFastestPathRouterBike.AddVertex(Node->ID());
             DFastestPathRouterWalkBus.AddVertex(Node->ID());
-            DNodeToVertexID[Node->ID()] = VertexID; 
+            DNodeToVertexID[Node->ID()] = VertexID;
+            Sorted.push_back(Node); //
+
+
         }
         std::sort(Sorted.begin(), Sorted.end(), [](const std::shared_ptr<CStreetMap::SNode>& a, const std::shared_ptr<CStreetMap::SNode>& b) {
             return a->ID() < b->ID(); // Assuming each SNode has an ID method for comparison
@@ -83,6 +97,11 @@ struct CDijkstraTransportationPlanner::SImplementation{
             bool Bikeable = Way->GetAttribute("bicycle") != "no";
             bool Bidirectional = Way->GetAttribute("oneway") != "yes";
             auto PreviousNodeID = Way->GetNodeID(0);
+
+            if(Way->HasAttribute("maxspeed")){
+                speed = stoi(Way->GetAttribute("maxspeed"));
+            }
+
             for(size_t NodeIndex = 1; NodeIndex < Way->NodeCount();NodeIndex++){
                 // we will get the 
                 auto NextNodeID = Way->GetNodeID(NodeIndex);
@@ -98,40 +117,46 @@ struct CDijkstraTransportationPlanner::SImplementation{
 
                 auto H_Dist = GeoUtils->HaversineDistanceInMiles(PreviousNode_Loc, NextNode_Loc);
                 
+                DShortestPathRouter.AddEdge(PreviousNode_VertextID, NextNode_VertexID, H_Dist, Bidirectional);
                 // Populating DShortestPathRouter Edges based on Bidirectional or not
-                if(Bidirectional){
-                    DShortestPathRouter.AddEdge(PreviousNode_VertextID, NextNode_VertexID, H_Dist);
-                    DShortestPathRouter.AddEdge(NextNode_VertexID, PreviousNode_VertextID, H_Dist);
-                }
-                else{
-                    DShortestPathRouter.AddEdge(PreviousNode_VertextID, NextNode_VertexID, H_Dist);
-                }
+                // if(Bidirectional){
+                //     DShortestPathRouter.AddEdge(PreviousNode_VertextID, NextNode_VertexID, H_Dist);
+                //     DShortestPathRouter.AddEdge(NextNode_VertexID, PreviousNode_VertextID, H_Dist);
+                // }
+                // else{
+                //     DShortestPathRouter.AddEdge(PreviousNode_VertextID, NextNode_VertexID, H_Dist);
+                // }
 
                 // Populating DFastestPatRouterBike Edges based on Bidirectional or not & Bikeable
-                if(Bikeable & !Bidirectional){
-                    auto biketime = H_Dist/(Trans_plan->BikeSpeed());
-                    DFastestPathRouterBike.AddEdge(PreviousNode_VertextID, NextNode_VertexID, biketime);
+                // if(Bikeable & !Bidirectional){
+                //     auto biketime = H_Dist/(transConfig->BikeSpeed());
+                //     DFastestPathRouterBike.AddEdge(PreviousNode_VertextID, NextNode_VertexID, biketime);
+                // }
+                // else if(Bikeable & Bidirectional){
+                //     auto biketime = H_Dist/(transConfig->BikeSpeed());
+                //     DFastestPathRouterBike.AddEdge(PreviousNode_VertextID, NextNode_VertexID, biketime);
+                //     DFastestPathRouterBike.AddEdge(NextNode_VertexID, PreviousNode_VertextID, biketime);
+                // }
+
+                auto biketime = H_Dist/(transConfig->BikeSpeed());
+                if(Bikeable){
+                    DFastestPathRouterBike.AddEdge(PreviousNode_VertextID, NextNode_VertexID, biketime, Bidirectional);
                 }
-                else if(Bikeable & Bidirectional){
-                    auto biketime = H_Dist/(Trans_plan->BikeSpeed());
-                    DFastestPathRouterBike.AddEdge(PreviousNode_VertextID, NextNode_VertexID, biketime);
-                    DFastestPathRouterBike.AddEdge(NextNode_VertexID, PreviousNode_VertextID, biketime);
-                }
 
-                if(BusSystemIndex->RouteBetweenNodeIDs(PreviousNodeID, NextNodeID)){
-                    auto walktime = H_Dist/(Trans_plan->WalkSpeed());
+                // if(BusSystemIndex->RouteBetweenNodeIDs(PreviousNodeID, NextNodeID)){
+                //     auto walktime = H_Dist/(transConfig->WalkSpeed());
 
-                    auto bustime = H_Dist/(Trans_plan->DefaultSpeedLimit()); // ***** how to get speed limit *****
+                //     auto bustime = H_Dist/(transConfig->DefaultSpeedLimit()); // ***** how to get speed limit *****
 
-                    auto total_bustime = bustime + Trans_plan->BusStopTime();
+                //     auto total_bustime = bustime + transConfig->BusStopTime();
 
-                    if(total_bustime < walktime){
-                        DFastestPathRouterWalkBus.AddEdge(PreviousNode_VertextID, NextNode_VertexID, total_bustime);
-                    }
-                    else{
-                        DFastestPathRouterWalkBus.AddEdge(PreviousNode_VertextID, NextNode_VertexID, walktime);
-                    }
-                }
+                //     if(total_bustime < walktime){
+                //         DFastestPathRouterWalkBus.AddEdge(PreviousNode_VertextID, NextNode_VertexID, total_bustime);
+                //     }
+                //     else{
+                //         DFastestPathRouterWalkBus.AddEdge(PreviousNode_VertextID, NextNode_VertexID, walktime);
+                //     }
+                // }
 
 
 
@@ -163,9 +188,39 @@ struct CDijkstraTransportationPlanner::SImplementation{
                 // directly between the two nodes 
                 // just use the shortest path for the bus, the busses will follow the shortest path
                 //this is where you will build up the shortest path graph and use it to find the shortest path
-
+                PreviousNodeID = NextNodeID;
             }
         }
+
+        for(size_t Index = 0; Index < DBusSystem->RouteCount(); Index++){
+            auto Route = DBusSystem->RouteByIndex(Index);
+            auto PreviousStopID = Route->GetStopID(0);
+            auto PreviousStop = DBusSystem->StopByID(PreviousStopID);
+            auto PreviousNodeID = PreviousStop->NodeID();
+            for(size_t NodeIndex = 1; NodeIndex < Route->StopCount(); NodeIndex++){
+                auto NextStopID = Route->GetStopID(NodeIndex);
+                auto NextStop = DBusSystem->StopByID(NextStopID);
+                auto NextNodeID = NextStop->NodeID();
+                auto PreviousNode_VertextID = DNodeToVertexID[PreviousNodeID];
+                auto NextNode_VertexID = DNodeToVertexID[NextNodeID];
+                auto H_Dist = GeoUtils->HaversineDistanceInMiles(DStreetMap->NodeByID(PreviousNodeID)->Location(), DStreetMap->NodeByID(NextNodeID)->Location());
+                if(BusSystemIndex->RouteBetweenNodeIDs(PreviousNodeID, NextNodeID)){
+                    auto walktime = H_Dist/(transConfig->WalkSpeed());
+
+                    auto bustime = H_Dist/speed; // ***** how to get speed limit *****
+
+                    auto total_bustime = bustime + ((transConfig->BusStopTime())/3600);
+
+                    if(total_bustime < walktime){
+                        DFastestPathRouterWalkBus.AddEdge(PreviousNode_VertextID, NextNode_VertexID, total_bustime);
+                    }
+                    else{
+                        DFastestPathRouterWalkBus.AddEdge(PreviousNode_VertextID, NextNode_VertexID, walktime);
+                    }
+                PreviousNodeID = NextNodeID;
+            }
+        }
+    }
     } 
 
     std::size_t NodeCount() const noexcept{
@@ -185,91 +240,89 @@ struct CDijkstraTransportationPlanner::SImplementation{
         }
     }
 
-    double FindShortestPath(TNodeID src, TNodeID dest, std::vector< TNodeID > &path){
-        std::vector< CPathRouter::TVertexID > ShortestPath; // compare node id to vector id // create a struct
-        // put in some checks for this
+    double FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNodeID> &path) {
+        if (DNodeToVertexID.find(src) == DNodeToVertexID.end() || DNodeToVertexID.find(dest) == DNodeToVertexID.end()) {
+            return CPathRouter::NoPathExists;
+        }
+        std::vector<CPathRouter::TVertexID> VertexPath;
         auto SourceVertexID = DNodeToVertexID[src];
         auto DestinationVertexID = DNodeToVertexID[dest];
-        auto Distance = DShortestPathRouter.FindShortestPath(SourceVertexID,DestinationVertexID,ShortestPath);
+        double Distance = DShortestPathRouter.FindShortestPath(SourceVertexID, DestinationVertexID, VertexPath);
+        if (Distance == CPathRouter::NoPathExists) {
+            return CPathRouter::NoPathExists;
+        }
         path.clear();
-        for(auto VertexID : ShortestPath){
-            path.push_back(std::any_cast< TNodeID >(DShortestPathRouter.GetVertexTag(VertexID)));
+        for (auto VertexID : VertexPath) {
+            //path.push_back(std::any_cast<TNodeID>(DShortestPathRouter.GetVertexTag(VertexID)));
+            path.push_back(VertexID+1);
         }
         return Distance;
     }
 
-    double FindFastest(TNodeID src, TNodeID dest, std::vector< TTripStep > &path){
-        std::vector< CPathRouter::TVertexID > ShortestPathBike;
-        std::vector< CPathRouter::TVertexID > ShortestPathBusWalk;
-
-        auto SourceVertexID = DNodeToVertexID[src];
-        auto DestinationVertexID = DNodeToVertexID[dest];
-
-        auto DistanceBike = DShortestPathRouter.FindShortestPath(SourceVertexID,DestinationVertexID,ShortestPathBike);
-        auto DistanceBusWalk = DShortestPathRouter.FindShortestPath(SourceVertexID,DestinationVertexID,ShortestPathBusWalk);
-
-        auto Distance = 0.0;
-
-        path.clear();
-
-        if(DistanceBike < DistanceBusWalk){
-            Distance = DistanceBike;
-            for(auto VertexID : ShortestPathBike){
-                auto x = std::any_cast< TNodeID >(DShortestPathRouter.GetVertexTag(VertexID));
-                TTripStep pair = {CTransportationPlanner::ETransportationMode::Bike, x};
-                path.push_back(pair);
-            }
-        }
-        else{
-            Distance = DistanceBusWalk;
-            for(auto i = 0; i < ShortestPathBusWalk.size() - 1; i++){
-                auto x_VID = ShortestPathBusWalk[i];
-                auto y_VID = ShortestPathBusWalk[i+1];
-                auto x = std::any_cast< TNodeID >(DShortestPathRouter.GetVertexTag(x_VID));
-                auto y = std::any_cast< TNodeID >(DShortestPathRouter.GetVertexTag(y_VID));
-                if(BusSystemIndex->RouteBetweenNodeIDs(x, y)){
-                    TTripStep pair = {CTransportationPlanner::ETransportationMode::Bus, x};
-                    path.push_back(pair);
-                }
-                else{
-                    TTripStep pair = {CTransportationPlanner::ETransportationMode::Walk, x};
-                    path.push_back(pair);
-                }
-            }
-            // for bus/walk depending on which we take
-        }
-
-
-        return Distance;
-        // have to do two searches search the bike path and search the walking plus bus and just take the faster of the two the lowest time of the two
+    double FindFastest(TNodeID src, TNodeID dest, std::vector< TTripStep > &path) {
+    if (DNodeToVertexID.find(src) == DNodeToVertexID.end() || DNodeToVertexID.find(dest) == DNodeToVertexID.end()) {
+        return CPathRouter::NoPathExists;
     }
+
+    std::vector<CPathRouter::TVertexID> PathBike, PathWalkBus;
+    auto SourceVertexID = DNodeToVertexID[src];
+    auto DestinationVertexID = DNodeToVertexID[dest];
+    double DistanceBike = DFastestPathRouterBike.FindShortestPath(SourceVertexID, DestinationVertexID, PathBike);
+    double DistanceWalkBus = DFastestPathRouterWalkBus.FindShortestPath(SourceVertexID, DestinationVertexID, PathWalkBus);
+
+    double Distance = CPathRouter::NoPathExists;
+    path.clear();
+
+    if (DistanceBike < DistanceWalkBus && DistanceBike != CPathRouter::NoPathExists) {
+        Distance = DistanceBike;
+        for (auto VertexID : PathBike) {
+            TNodeID NodeID = std::any_cast<TNodeID>(DFastestPathRouterBike.GetVertexTag(VertexID));
+            path.push_back({ETransportationMode::Bike, NodeID});
+        }
+    } else if (DistanceWalkBus != CPathRouter::NoPathExists) {
+        Distance = DistanceWalkBus;
+        TNodeID previousNodeID = std::any_cast<TNodeID>(DFastestPathRouterWalkBus.GetVertexTag(PathWalkBus.front()));
+        for (size_t i = 0; i < PathWalkBus.size(); ++i) {
+            TNodeID currentNodeID = std::any_cast<TNodeID>(DFastestPathRouterWalkBus.GetVertexTag(PathWalkBus[i]));
+            ETransportationMode mode = ETransportationMode::Walk; // Default to walk
+            if (BusSystemIndex->RouteBetweenNodeIDs(previousNodeID, currentNodeID)) {
+                mode = ETransportationMode::Bus;
+            }
+            path.push_back({mode, currentNodeID});
+            previousNodeID = currentNodeID;
+        }
+    }
+
+    return Distance;
+}
+
 
     bool GetPathDescription(const std::vector< TTripStep >&path, std::vector < std::string > &desc) const{
-        TTripStep start = path[0];
-        TNodeID start_nodeID = start.second;
-        auto start_node = DStreetMap->NodeByID(start_nodeID);
-        auto start_node_loc = start_node->Location();
-        double start_lat = start_node_loc.first;
-        double start_lon = start_node_loc.second;
-        std::string start_lat_str = convertDMS(start_lat, 'L');
-        std::string start_lon_str = convertDMS(start_lon, 'O');
+        // TTripStep start = path[0];
+        // TNodeID start_nodeID = start.second;
+        // auto start_node = DStreetMap->NodeByID(start_nodeID);
+        // auto start_node_loc = start_node->Location();
+        // double start_lat = start_node_loc.first;
+        // double start_lon = start_node_loc.second;
+        // std::string start_lat_str = convertDMS(start_lat, 'L');
+        // std::string start_lon_str = convertDMS(start_lon, 'O');
         
 
-        std::string start_str = "Start at " + start_lat_str + ", " + start_lon_str;
-        desc.push_back(start_str);
+        // std::string start_str = "Start at " + start_lat_str + ", " + start_lon_str;
+        // desc.push_back(start_str);
 
-        for(auto i = 1; i < path.size(); i++){
-            TTripStep stop = path[i];
-            TNodeID nodeID = stop.second;
-            auto node = DStreetMap->NodeByID(nodeID);
-            auto node_loc = node->Location();
-            double lat = node_loc.first;
-            double lon = node_loc.second;
-            std::string lat_str = convertDMS(lat, 'L');
-            std::string lon_str = convertDMS(lon, 'O');
-            
+        // for(auto i = 1; i < path.size(); i++){
+        //     TTripStep stop = path[i];
+        //     TNodeID nodeID = stop.second;
+        //     auto node = DStreetMap->NodeByID(nodeID);
+        //     auto node_loc = node->Location();
+        //     double lat = node_loc.first;
+        //     double lon = node_loc.second;
+        //     std::string lat_str = convertDMS(lat, 'L');
+        //     std::string lon_str = convertDMS(lon, 'O');
+            return true;
 
-        }
+       // }
     }
 
     
@@ -305,12 +358,3 @@ double CDijkstraTransportationPlanner::FindFastestPath(TNodeID src, TNodeID dest
 bool  CDijkstraTransportationPlanner::GetPathDescription(const std::vector< TTripStep > &path, std::vector< std::string > &desc) const{
     return DImplementation->GetPathDescription(path,desc);
 }
-
-
-
-
-
-
-
-
-

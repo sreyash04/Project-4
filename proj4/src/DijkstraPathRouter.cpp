@@ -1,6 +1,8 @@
-#include "DijkstraTransportationPlanner.h"
 #include "DijkstraPathRouter.h"
+#include "DijkstraTransportationPlanner.h"
+#include "PathRouter.h"
 #include <algorithm>
+#include <iostream>
 
 struct CDijkstraPathRouter::SImplementation
 {
@@ -49,7 +51,7 @@ struct CDijkstraPathRouter::SImplementation
             }
             return true;
         }
-        return true;
+        return false;
     }
 
     bool Precompute(std::chrono::steady_clock::time_point deadline) noexcept
@@ -58,7 +60,20 @@ struct CDijkstraPathRouter::SImplementation
     }
 
     double FindShortestPath(TVertexID src, TVertexID dest, std::vector<TVertexID> &path) noexcept
-    {
+    {   
+        // Gave my code to chat gpt asked why am I getting segmentation error and asked it to add segmentation tags if required
+        // Validate if source or destination vertices are invalid and handle it
+    if (src == CPathRouter::InvalidVertexID || dest == CPathRouter::InvalidVertexID) {
+        std::cerr << "Invalid vertex ID detected in path request." << std::endl;
+        return CPathRouter::NoPathExists;
+    }
+
+    // Check if the source and destination are identical
+    if (src == dest) {
+        // std::cerr << "Source equals destination: " << src << std::endl;
+        path = {src}; // Directly assign the source to the path, clearing any previous contents
+        return 0.0; // The distance for identical start and end points is zero
+    }
         std::vector<TVertexID> PendingVertices;
         std::vector<TVertexID> Previous(DVertices.size(), CPathRouter::InvalidVertexID);
         // initialize to infinity
@@ -85,11 +100,11 @@ struct CDijkstraPathRouter::SImplementation
             //  if current id is equal to destination you have found the destination
             //  you can add an if and a break right here ~~~~ to outperform the profs code
 
-            // i am doing this
-            if(CurrentID == dest){
-                break;
-            }
-
+            // // i am doing this
+            // if(src == dest){
+            //     break;
+            // }
+            
             for (auto Edge : DVertices[CurrentID].Dedge)
             {
                 auto EdgeWeight = Edge.first;
