@@ -1,1 +1,327 @@
 # Project-4
+ECS 34 - Project 4
+------------------------
+STUDENT 1: Arnav Suden 918550383
+
+STUDENT 2: Sreyash Ravinuthala 920484337
+
+PROJECT STATUS
+Everything works need to test out TransportationCommandLine.cpp file and have attempted the extra credit Get Path Description, and tried to optimize DijkstraPathRouter
+------------------------
+KNOWN ISSUES
+GetPathDescription doesnt fully work
+------------------------
+GENERATIVE AI USE CHAT GPT
+------------------------
+PROMT 1
+Asked Chat gpt why am I getting out of bound error
+My promt // std::string Slice(const std::string &str, ssize_t start, ssize_t end) noexcept{
+//     return str.substr(start,str.length()-start);
+// }
+
+RESPONSE 1
+std::string Slice(const std::string &str, ssize_t start, ssize_t end) noexcept {
+    // Adjust negative indices
+    ssize_t strLen = static_cast<ssize_t>(str.length());
+    if (start < 0) start = strLen + start;
+    if (end <= 0) end = strLen + end;
+
+    // Ensure start and end are within bounds
+    start = std::max(start, static_cast<ssize_t>(0));
+    end = std::min(end, strLen);
+
+    if (start > end) return ""; // Return empty string if start is beyond end
+
+    ssize_t len = end - start;
+    return str.substr(start, len);
+}
+------------------------------
+PROMT 2
+Asked chat gpt to fix error in my previous expand tabs
+My promt 
+
+RESPONSE 2
+std::string ExpandTabs(const std::string &str, int tabsize) noexcept{
+    std::string result = str;
+    std::string::size_type pos = 0;
+    while ((pos = result.find('\t', pos)) != std::string::npos) {
+        int spaces = tabsize - (pos % tabsize);
+        result.replace(pos, 1, std::string(spaces, ' '));
+        pos += spaces;
+    }
+    return result;
+}
+--------------------------------
+PROMT 3
+Asked Chat gpt how to 
+I have latitude and longitude as follows: lat="38.5178523" lon="-121.7712408" how do I convert it to a format like: 38d 23' 60\" N, 121d 43' 12\" W"
+
+RESPONSE 3
+To convert latitude and longitude from decimal degrees to degrees, minutes, and seconds (DMS) format in C++, you can use the following code snippet. This code will also handle the direction (N, S, E, W) based on whether the coordinates are positive or negative:
+
+```cpp
+#include <iostream>
+#include <cmath> // For floor function
+
+void convertDMS(double degrees, char type) {
+    // Determine the direction based on the type (latitude or longitude) and the value
+    char direction = ' ';
+    if (type == 'L') { // Latitude
+        direction = (degrees >= 0) ? 'N' : 'S';
+    } else if (type == 'O') { // Longitude
+        direction = (degrees >= 0) ? 'E' : 'W';
+    }
+    degrees = fabs(degrees); // Ensure the degrees are positive for calculation
+
+    // Calculate degrees, minutes, and seconds
+    int d = static_cast<int>(degrees);
+    double minutesDecimal = (degrees - d) * 60;
+    int m = static_cast<int>(minutesDecimal);
+    double s = (minutesDecimal - m) * 60;
+
+    // Output the result
+    std::cout << d << "d " << m << "' " << std::fixed << s << "\" " << direction << std::endl;
+}
+
+int main() {
+    double latitude = 38.5178523;
+    double longitude = -121.7712408;
+
+    std::cout << "Latitude: ";
+    convertDMS(latitude, 'L');
+
+    std::cout << "Longitude: ";
+    convertDMS(longitude, 'O');
+
+    return 0;
+}
+```
+
+This code defines a `convertDMS` function that converts decimal degrees to DMS format, handling both latitude and longitude. The `type` parameter (`'L'` for latitude and `'O'` for longitude) is used to determine the appropriate direction (N, S, E, W) based on the sign of the decimal degree value. The `main` function demonstrates using this function to convert specific latitude and longitude values.
+-----------------------------------
+PROMT 4
+standard sort algo for vector in cpp
+RESPONSE 4
+In C++, the standard sorting algorithm for vectors and other containers is provided by the <algorithm> header, specifically through the std::sort function. This function is highly efficient and adaptable, being able to sort almost any type of data for which a comparison is defined.
+Here is a simple usage example for sorting a std::vector<int>:
+cpp
+
+Copy code
+#include <algorithm> // For std::sort
+#include <vector>
+#include <iostream>
+
+int main() {
+    std::vector<int> vec = {4, 1, 3, 5, 2};
+
+    // Sorting in ascending order
+    std::sort(vec.begin(), vec.end());
+
+    // Print the sorted vector
+    for(int i : vec) {
+        std::cout << i << ' ';
+    }
+    std::cout << std::endl;
+
+    return 0;
+}
+In this example, std::sort sorts the elements of vec in ascending order. By default, std::sort uses the operator < to compare elements, so the elements of the vector need to support this operator or you need to provide a custom comparison function.
+If you want to sort in descending order or according to some other criteria, you can pass a comparison function as the third argument to std::sort:
+cpp
+
+Copy code
+std::sort(vec.begin(), vec.end(), std::greater<int>()); // For descending order
+Or, for custom sorting criteria:
+cpp
+
+Copy code
+std::sort(vec.begin(), vec.end(), [](int a, int b) {
+    return a > b; // Example of custom sorting criterion (descending order)
+});
+The underlying algorithm of std::sort is not specified by the C++ standard; it is left to the implementation. However, most implementations use introsort, which is a hybrid sorting algorithm combining quicksort, heapsort, and insertion sort, allowing for both fast average performance and optimal worst-case performance.
+-----------------------------------
+PROMT 5
+Asked Chat gpt why am I getting out of bound error
+My promt // std::string Slice(const std::string &str, ssize_t start, ssize_t end) noexcept{
+//     return str.substr(start,str.length()-start);
+// }
+RESPONSE 5
+What chat gpt gave 
+std::string Slice(const std::string &str, ssize_t start, ssize_t end) noexcept {
+    // Adjust negative indices
+    ssize_t strLen = static_cast<ssize_t>(str.length());
+    if (start < 0) start = strLen + start;
+    if (end <= 0) end = strLen + end;
+
+    // Ensure start and end are within bounds
+    start = std::max(start, static_cast<ssize_t>(0));
+    end = std::min(end, strLen);
+
+    if (start > end) return ""; // Return empty string if start is beyond end
+
+    ssize_t len = end - start;
+    return str.substr(start, len);
+}
+----------------------------
+PROMT 6
+Asked chat gpt to fix error in my previous expand tabs
+My promt 
+What chat gpt gave 
+RESPONSE 6
+std::string ExpandTabs(const std::string &str, int tabsize) noexcept{
+    std::string result = str;
+    std::string::size_type pos = 0;
+    while ((pos = result.find('\t', pos)) != std::string::npos) {
+        int spaces = tabsize - (pos % tabsize);
+        result.replace(pos, 1, std::string(spaces, ' '));
+        pos += spaces;
+    }
+    return result;
+}
+-------------------------------------------
+PROMT 7
+Asked chat gpt // Gave my code to chat gpt asked why am I getting segmentation error and asked it to add segmentation tags if required
+RESPONSE 7
+What Chat Gpt Gave 
+  if (src == CPathRouter::InvalidVertexID || dest == CPathRouter::InvalidVertexID) {
+        std::cerr << "Invalid vertex ID detected in path request." << std::endl;
+        return CPathRouter::NoPathExists;
+    }
+
+    // Check if the source and destination are identical
+    if (src == dest) {
+        std::cerr << "Source equals destination: " << src << std::endl;
+        path = {src}; // Directly assign the source to the path, clearing any previous contents
+        return 0.0; // The distance for identical start and end points is zero
+    }
+----------------------------------------
+PROMT 8
+Gave Chat Gpt my code for findshortest path and find fastest path and asked it to fix bugs 
+What I gave chat gpt
+// double FindShortestPath(TNodeID src, TNodeID dest, std::vector< TNodeID > &path){
+    //     std::vector< CPathRouter::TVertexID > ShortestPath; // compare node id to vector id // create a struct
+    //     // put in some checks for this
+    //     auto SourceVertexID = DNodeToVertexID[src];
+    //     auto DestinationVertexID = DNodeToVertexID[dest];
+    //     auto Distance = DShortestPathRouter.FindShortestPath(SourceVertexID,DestinationVertexID,ShortestPath);
+    //     path.clear();
+    //     for(auto VertexID : ShortestPath){
+    //         path.push_back(std::any_cast< TNodeID >(DShortestPathRouter.GetVertexTag(VertexID)));
+    //     }
+    //     return Distance;
+    // }
+RESPONSE 8
+double FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNodeID> &path) {
+        if (DNodeToVertexID.find(src) == DNodeToVertexID.end() || DNodeToVertexID.find(dest) == DNodeToVertexID.end()) {
+            return CPathRouter::NoPathExists;
+        }
+        std::vector<CPathRouter::TVertexID> VertexPath;
+        auto SourceVertexID = DNodeToVertexID[src];
+        auto DestinationVertexID = DNodeToVertexID[dest];
+        double Distance = DShortestPathRouter.FindShortestPath(SourceVertexID, DestinationVertexID, VertexPath);
+        if (Distance == CPathRouter::NoPathExists) {
+            return CPathRouter::NoPathExists;
+        }
+        path.clear();
+        for (auto VertexID : VertexPath) {
+            path.push_back(std::any_cast<TNodeID>(DShortestPathRouter.GetVertexTag(VertexID)));
+        }
+        return Distance;
+    }
+-----------------------------------
+PROMT 9
+What I gave chat gpt to fix
+What I gave chat gpt 
+// double FindFastest(TNodeID src, TNodeID dest, std::vector< TTripStep > &path){
+    //     std::vector< CPathRouter::TVertexID > ShortestPathBike;
+    //     std::vector< CPathRouter::TVertexID > ShortestPathBusWalk;
+       
+
+    //     auto SourceVertexID = DNodeToVertexID[src];
+    //     auto DestinationVertexID = DNodeToVertexID[dest];
+
+    //     auto DistanceBike = DShortestPathRouter.FindShortestPath(SourceVertexID,DestinationVertexID,ShortestPathBike);
+    //     auto DistanceBusWalk = DShortestPathRouter.FindShortestPath(SourceVertexID,DestinationVertexID,ShortestPathBusWalk);
+
+    //     auto Distance = 0.0;
+
+    //     path.clear();
+
+    //     if(DistanceBike < DistanceBusWalk){
+    //         Distance = DistanceBike;
+    //         for(auto VertexID : ShortestPathBike){
+    //             auto x = std::any_cast< TNodeID >(DShortestPathRouter.GetVertexTag(VertexID));
+    //             TTripStep pair = {CTransportationPlanner::ETransportationMode::Bike, x};
+    //             path.push_back(pair);
+    //         }
+    //     }
+    //     else{
+    //         Distance = DistanceBusWalk;
+    //         for(auto i = 0; i < ShortestPathBusWalk.size() - 1; i++){
+    //             auto x_VID = ShortestPathBusWalk[i];
+    //             auto y_VID = ShortestPathBusWalk[i+1];
+    //             auto x = std::any_cast< TNodeID >(DShortestPathRouter.GetVertexTag(x_VID));
+    //             auto y = std::any_cast< TNodeID >(DShortestPathRouter.GetVertexTag(y_VID));
+    //             if(BusSystemIndex->RouteBetweenNodeIDs(x, y)){
+    //                 TTripStep pair = {CTransportationPlanner::ETransportationMode::Bus, x};
+    //                 path.push_back(pair);
+    //             }
+    //             else{
+    //                 TTripStep pair = {CTransportationPlanner::ETransportationMode::Walk, x};
+    //                 path.push_back(pair);
+    //             }
+    //         }
+    //         // for bus/walk depending on which we take
+    //     }
+
+
+    //     return Distance;
+    //     // have to do two searches search the bike path and search the walking plus bus and just take the faster of the two the lowest time of the two
+    // }
+
+RESPONSE 9
+ double FindFastest(TNodeID src, TNodeID dest, std::vector< TTripStep > &path) {
+    if (DNodeToVertexID.find(src) == DNodeToVertexID.end() || DNodeToVertexID.find(dest) == DNodeToVertexID.end()) {
+        return CPathRouter::NoPathExists;
+    }
+
+    std::vector<CPathRouter::TVertexID> PathBike, PathWalkBus;
+    auto SourceVertexID = DNodeToVertexID[src];
+    auto DestinationVertexID = DNodeToVertexID[dest];
+    double DistanceBike = DFastestPathRouterBike.FindShortestPath(SourceVertexID, DestinationVertexID, PathBike);
+    double DistanceWalkBus = DFastestPathRouterWalkBus.FindShortestPath(SourceVertexID, DestinationVertexID, PathWalkBus);
+
+    double Distance = CPathRouter::NoPathExists;
+    path.clear();
+
+    if (DistanceBike < DistanceWalkBus && DistanceBike != CPathRouter::NoPathExists) {
+        Distance = DistanceBike;
+        for (auto VertexID : PathBike) {
+            TNodeID NodeID = std::any_cast<TNodeID>(DFastestPathRouterBike.GetVertexTag(VertexID));
+            path.push_back({ETransportationMode::Bike, NodeID});
+        }
+    } else if (DistanceWalkBus != CPathRouter::NoPathExists) {
+        Distance = DistanceWalkBus;
+        TNodeID previousNodeID = std::any_cast<TNodeID>(DFastestPathRouterWalkBus.GetVertexTag(PathWalkBus.front()));
+        for (size_t i = 0; i < PathWalkBus.size(); ++i) {
+            TNodeID currentNodeID = std::any_cast<TNodeID>(DFastestPathRouterWalkBus.GetVertexTag(PathWalkBus[i]));
+            ETransportationMode mode = ETransportationMode::Walk; // Default to walk
+            if (BusSystemIndex->RouteBetweenNodeIDs(previousNodeID, currentNodeID)) {
+                mode = ETransportationMode::Bus;
+            }
+            path.push_back({mode, currentNodeID});
+            previousNodeID = currentNodeID;
+        }
+    }
+
+    return Distance;
+}
+-----------------------------------------------------------------
+PROMT 10
+Asked Chat GPT To review simple test cases for DijkstraPathRouter and make any necessary changes needed
+RESPONSE 10
+Asked Chat GPT To review simple test cases for DijkstraPathRouter and make any necessary changes needed
+-----------------------------------------------------------------
+PROMT 11
+
+RESPONSE 11
