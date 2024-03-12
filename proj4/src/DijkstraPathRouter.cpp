@@ -15,19 +15,19 @@ struct CDijkstraPathRouter::SImplementation
     };
 
     std::vector<Svertex> DVertices;
-
+// vertext count
     std::size_t VertexCount() const noexcept
     {
         return DVertices.size();
     }
-
+// adding vertexusing tags
     TVertexID AddVertex(std::any tag) noexcept
     {
         TVertexID NewVertexID = DVertices.size();
         DVertices.push_back({tag, {}});
         return NewVertexID;
     }
-
+// func to get the vertex tag
     std::any GetVertexTag(TVertexID id) const noexcept
     {
         if (id < DVertices.size())
@@ -37,7 +37,7 @@ struct CDijkstraPathRouter::SImplementation
         }
         return std::any();
     }
-
+// func to add edeges will use weight
     bool AddEdge(TVertexID src, TVertexID dest, double weight, bool bidir = false) noexcept
     {
         if ((src < DVertices.size()) && (dest < DVertices.size()) && (0.0 <= weight))
@@ -53,12 +53,12 @@ struct CDijkstraPathRouter::SImplementation
         }
         return false;
     }
-
+// not calculating here 
     bool Precompute(std::chrono::steady_clock::time_point deadline) noexcept
     {
         return true;
     }
-
+// func to create the shortest path
     double FindShortestPath(TVertexID src, TVertexID dest, std::vector<TVertexID> &path) noexcept
     {   
         // Gave my code to chat gpt asked why am I getting segmentation error and asked it to add segmentation tags if required

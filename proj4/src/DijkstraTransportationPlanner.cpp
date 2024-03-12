@@ -15,6 +15,7 @@ struct CDijkstraTransportationPlanner::SImplementation{
     std::shared_ptr< CStreetMap > DStreetMap;
     std::shared_ptr< CBusSystem > DBusSystem;
     std::unordered_map< CStreetMap::TNodeID, CPathRouter::TVertexID > DNodeToVertexID;
+    // Path routers for different routing strategies (shortest path, fastest by bike, fastest by walking and bus)
     CDijkstraPathRouter DShortestPathRouter; // we want locals one for the shortest path pone for biking and one for walking plus bus
     CDijkstraPathRouter DFastestPathRouterBike;
     CDijkstraPathRouter DFastestPathRouterWalkBus;
@@ -90,7 +91,7 @@ struct CDijkstraTransportationPlanner::SImplementation{
             return a->ID() < b->ID(); // Assuming each SNode has an ID method for comparison
             });//changed here ------------------
             
-        // now go to edges
+        // now go to edges to calculate
         for(size_t Index = 0; Index < DStreetMap->WayCount();Index++){
             auto Way = DStreetMap->WayByIndex(Index);
             // asumme bicyle
@@ -191,7 +192,7 @@ struct CDijkstraTransportationPlanner::SImplementation{
                 PreviousNodeID = NextNodeID;
             }
         }
-
+// calculate using time
         for(size_t Index = 0; Index < DBusSystem->RouteCount(); Index++){
             auto Route = DBusSystem->RouteByIndex(Index);
             auto PreviousStopID = Route->GetStopID(0);
@@ -222,7 +223,7 @@ struct CDijkstraTransportationPlanner::SImplementation{
         }
     }
     } 
-
+// return the node count
     std::size_t NodeCount() const noexcept{
         return DStreetMap->NodeCount();
     }
@@ -239,7 +240,7 @@ struct CDijkstraTransportationPlanner::SImplementation{
             return nullptr;
         }
     }
-
+// to find the shortest path
     double FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNodeID> &path) {
         if (DNodeToVertexID.find(src) == DNodeToVertexID.end() || DNodeToVertexID.find(dest) == DNodeToVertexID.end()) {
             return CPathRouter::NoPathExists;
@@ -258,7 +259,7 @@ struct CDijkstraTransportationPlanner::SImplementation{
         }
         return Distance;
     }
-
+// to find the fastest path
     double FindFastest(TNodeID src, TNodeID dest, std::vector< TTripStep > &path) {
     if (DNodeToVertexID.find(src) == DNodeToVertexID.end() || DNodeToVertexID.find(dest) == DNodeToVertexID.end()) {
         return CPathRouter::NoPathExists;
