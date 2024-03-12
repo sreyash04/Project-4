@@ -853,5 +853,73 @@ Use of Lambda: The lambda writeMessage localizes the logic for converting and wr
 Placeholder Comments: For commands like "fastest", "shortest", "save", and "print", detailed implementations depend on the specifics of the CTransportationPlanner and related classes. The pattern established here can be extended to implement those commands as needed, focusing on parsing command arguments, interacting with the planner, and formatting output appropriately.
 
 
+Promt To Chat Gpt
+TransporationPlannerCommandLine.SimpleTest (0 ms)
+[ RUN      ] TransporationPlannerCommandLine.HelpTest
+./testsrc/TPCommandLineTest.cpp:56: Failure
+Expected equality of these values:
+  OutputSink->String()
+    Which is: ""
+  "> " "------------------------------------------------------------------------\n" "help     Display this help menu\n" "exit     Exit the program\n" "count    Output the number of nodes in the map\n" "node     Syntax \"node [0, count)\" \n" "         Will output node ID and Lat/Lon for node\n" "fastest  Syntax \"fastest start end\" \n" "         Calculates the time for fastest path from start to end\n" "shortest Syntax \"shortest start end\" \n" "         Calculates the distance for the shortest path from start to end\n" "save     Saves the last calculated path to file\n" "print    Prints the steps for the last calculated path\n" "> "
+    Which is: "> ------------------------------------------------------------------------\nhelp     Display this help menu\nexit     Exit the program\ncount    Output the number of nodes in the map\nnode     Syntax \"node [0, count)\" \n         Will output node ID and Lat/Lon for node\nfastest  Syntax \"fastest start end\" \n         Calculates the time for fastest path from start to end\nshortest Syntax \"shortest start end\" \n         Calculates the distance for the shortest path from start to end\nsave     Saves the last calculated path to file\nprint    Prints the steps for the last calculated path\n> "
+With diff:
+@@ -1,1 +1,13 @@
+-""
++> ------------------------------------------------------------------------
++help     Display this help menu
++exit     Exit the program
++count    Output the number of nodes in the map
++node     Syntax \"node [0, count)\" 
++         Will output node ID and Lat/Lon for node
++fastest  Syntax \"fastest start end\" 
++         Calculates the time for fastest path from start to end
++shortest Syntax \"shortest start end\" 
++         Calculates the distance for the shortest path from start to end
++save     Saves the last calculated path to file
++print    Prints the steps for the last calculated path
++> 
+the error message 
+
+What chat gpt gave me 
+void SImplementation::HandleCommand(const std::vector<std::string>& tokens) {
+    if (tokens.empty()) return;
+    const std::string& command = tokens[0];
+    if (command == "help") {
+        std::string helpText = "> ------------------------------------------------------------------------\n"
+                               "help     Display this help menu\n"
+                               "exit     Exit the program\n"
+                               "count    Output the number of nodes in the map\n"
+                               "node     Syntax \"node [0, count)\" \n"
+                               "         Will output node ID and Lat/Lon for node\n"
+                               "fastest  Syntax \"fastest start end\" \n"
+                               "         Calculates the time for fastest path from start to end\n"
+                               "shortest Syntax \"shortest start end\" \n"
+                               "         Calculates the distance for the shortest path from start to end\n"
+                               "save     Saves the last calculated path to file\n"
+                               "print    Prints the steps for the last calculated path\n"
+                               "> ";
+        OutSink->Write(std::vector<char>(helpText.begin(), helpText.end()));
+        return;
+    }
+    // Continue with the rest of your command handling logic...
+}
+
+bool SImplementation::ProcessCommands() {
+    // Output the initial prompt "> " before processing any commands
+    std::string initialPrompt = "> ";
+    OutSink->Write(std::vector<char>(initialPrompt.begin(), initialPrompt.end()));
+
+    std::vector<char> command_line;
+    while (CmdSrc->Read(command_line, 5)) {
+        std::string str(command_line.begin(), command_line.end());
+        auto tokens = ParseCommandLine(str);
+        if (!tokens.empty() && tokens[0] == "exit") {
+            break;
+        }
+        HandleCommand(tokens);
+    }
+    return true;
+}
+
 
 
